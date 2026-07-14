@@ -191,7 +191,7 @@ services:
 
 
   redis:
-    image: redis:7.0-alpine
+    image: 7.4.9-alpine
     #container_name: redis
     restart: unless-stopped
     ports:
