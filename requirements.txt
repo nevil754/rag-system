@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 accelerate==1.14.0
     # via docling-ibm-models
 aiofiles==25.1.0
@@ -110,12 +112,6 @@ cryptography==43.0.3
     #   unstructured-client
 cssselect2==0.9.0
     # via svglib
-cuda-bindings==13.3.1
-    # via torch
-cuda-pathfinder==1.5.6
-    # via cuda-bindings
-cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.3.0
-    # via torch
 cycler==0.12.1
     # via matplotlib
 dataclasses-json==0.6.7
@@ -445,47 +441,6 @@ numpy==1.26.4
     #   transformers
     #   unstructured
     #   unstructured-inference
-nvidia-cublas==13.1.1.3
-    # via
-    #   cuda-toolkit
-    #   nvidia-cudnn-cu13
-    #   nvidia-cusolver
-nvidia-cuda-cupti==13.0.85
-    # via cuda-toolkit
-nvidia-cuda-nvrtc==13.0.88
-    # via
-    #   cuda-toolkit
-    #   nvidia-cublas
-nvidia-cuda-runtime==13.0.96
-    # via cuda-toolkit
-nvidia-cudnn-cu13==9.20.0.48
-    # via torch
-nvidia-cufft==12.0.0.61
-    # via cuda-toolkit
-nvidia-cufile==1.15.1.6
-    # via cuda-toolkit
-nvidia-curand==10.4.0.35
-    # via cuda-toolkit
-nvidia-cusolver==12.0.4.66
-    # via cuda-toolkit
-nvidia-cusparse==12.6.3.3
-    # via
-    #   cuda-toolkit
-    #   nvidia-cusolver
-nvidia-cusparselt-cu13==0.8.1
-    # via torch
-nvidia-nccl-cu13==2.29.7
-    # via torch
-nvidia-nvjitlink==13.3.33
-    # via
-    #   cuda-toolkit
-    #   nvidia-cufft
-    #   nvidia-cusolver
-    #   nvidia-cusparse
-nvidia-nvshmem-cu13==3.4.5
-    # via torch
-nvidia-nvtx==13.0.85
-    # via cuda-toolkit
 olefile==0.47
     # via python-oxmsg
 ollama==0.6.2
@@ -901,8 +856,9 @@ tokenizers==0.22.2
     # via
     #   fastembed
     #   transformers
-torch==2.13.0
+torch==2.13.0+cpu
     # via
+    #   -r requirements.in
     #   accelerate
     #   docling-ibm-models
     #   easyocr
@@ -912,8 +868,9 @@ torch==2.13.0
     #   timm
     #   torchvision
     #   unstructured-inference
-torchvision==0.28.0
+torchvision==0.28.0+cpu
     # via
+    #   -r requirements.in
     #   docling-ibm-models
     #   easyocr
     #   effdet
@@ -948,8 +905,6 @@ tree-sitter-python==0.25.0
     # via docling-core
 tree-sitter-typescript==0.23.2
     # via docling-core
-triton==3.7.1
-    # via torch
 typer==0.12.5
     # via
     #   docling
