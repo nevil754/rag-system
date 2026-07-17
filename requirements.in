@@ -1,3 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+
 
 langchain==0.3.9  #x prompt, memory, tools, retrieval, chains.
 langchain-core==0.3.21  #x runnable, prompt templates, message objects, output parsers.
