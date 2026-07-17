@@ -1,12 +1,15 @@
 
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim-bookworm AS builder  
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg2 \
+    ca-certificates \
     unixodbc-dev \
-    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/12/prod.list \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+       | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg \
+    && curl -fsSL https://packages.microsoft.com/config/debian/12/prod.list \
+       | sed 's#deb #deb [signed-by=/etc/apt/keyrings/microsoft.gpg] #' \
        > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
@@ -21,7 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 
 
-FROM python:3.11-slim AS runtime
+FROM python:3.11-slim-bookworm AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc \
     curl \
@@ -44,10 +47,14 @@ COPY config/ ./config/
 COPY main.py .
 COPY app/ ./app/
 
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+RUN addgroup --system appgroup \
+    && adduser --system --ingroup appgroup appuser \
+    && mkdir -p /app/.cache/embeddings \
+    && chown -R appuser:appgroup /app
+
 USER appuser
 
-RUN mkdir -p /app/.cache/embeddings
+#RUN mkdir -p /app/.cache/embeddings  lo fai nel run here qua sopra
 
 EXPOSE 8000
 
