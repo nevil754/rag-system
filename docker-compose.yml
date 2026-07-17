@@ -236,7 +236,7 @@ services:
       /bin/bash -c "
       /opt/mssql/bin/sqlservr &
       SQLSERVR_PID=$$!
-      /init/entrypoint.sh
+      bash /init/entrypoint.sh
       wait $$SQLSERVR_PID"
     healthcheck:
       test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd",
