@@ -99,5 +99,5 @@ services:
 
   sqlserver:
     environment:
-      MSSQL_MEMORY_LIMIT_MB: 1024
+      MSSQL_MEMORY_LIMIT_MB: 2048
 
