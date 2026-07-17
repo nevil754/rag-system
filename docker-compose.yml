@@ -243,6 +243,7 @@ services:
              "-S", "localhost",
              "-U", "SA",
              "-P", "${SQLSERVER_PASSWORD}",
+             "-C",
              "-Q", "SELECT 1"]
       interval: 10s
       timeout: 5s
