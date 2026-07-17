@@ -9,21 +9,45 @@ from sqlalchemy.orm import Session, sessionmaker
 
 class TenantDB:
     def __init__(self):
-        self._sync_factory = sessionmaker(
-            bind= get_sync_engine(),
-            autocommit= False,
-            autoflush= False,
-        )
-        self._async_factory = async_sessionmaker(
-            bind=get_async_engine(),
-            autocommit=False,
-            autoflush=False,
-            expire_on_commit=False,
-        )
+        # self._sync_factory = sessionmaker(
+        #     bind= get_sync_engine(),
+        #     autocommit= False,
+        #     autoflush= False,
+        # )
+        # self._async_factory = async_sessionmaker(
+        #     bind=get_async_engine(),
+        #     autocommit=False,
+        #     autoflush=False,
+        #     expire_on_commit=False,
+        # )
+        self._sync_factory = None
+        self._async_factory = None      
+
+    @property
+    def sync_factory(self):
+        if self._sync_factory is None:
+            self._sync_factory = sessionmaker(
+                bind=get_sync_engine(),
+                autocommit=False,
+                autoflush=False,
+            )
+        return self._sync_factory
+
+    @property
+    def async_factory(self):
+        if self._async_factory is None:                  
+            self._async_factory = async_sessionmaker( 
+                bind=get_async_engine(),
+                autocommit=False,
+                autoflush=False,
+                expire_on_commit=False,
+            )
+        return self._async_factory                  
+
 
     @contextmanager
     def get_session(self, tenant_slug: str) -> Generator[Session, None, None]:
-        session = self._sync_factory()
+        session = self.sync_factory()
         impersonated = False
         try:
             self._set_schema_sync(session, tenant_slug)
@@ -46,7 +70,7 @@ class TenantDB:
     async def aget_session(
         self, tenant_slug: str
     ) -> AsyncGenerator[AsyncSession, None]:
-        async with self._async_factory() as session:
+        async with self.async_factory() as session:
             impersonated = False
             try:
                 await self._set_schema_async(session, tenant_slug)
@@ -99,7 +123,7 @@ class TenantDB:
         display_name: str,
         plan: str = "starter",
     ) -> None:
-        async with self._async_factory() as session:
+        async with self.async_factory() as session:
             try:
                 await session.execute(
                     text("""
@@ -138,8 +162,6 @@ def _slug_to_schema(slug: str) -> str:
 def _slug_to_user(slug: str) -> str:
     return "usr_" + _slug_to_schema(slug)
 
-tenant_db = TenantDB()
-
 @lru_cache(maxsize=1)
 def get_sync_engine():
     from app.core.settings import get_settings
@@ -174,3 +196,4 @@ def get_async_engine():
     logger.info("Engine SQL Server asincrono creato")
     return engine
 
+tenant_db = TenantDB()
