@@ -1,12 +1,15 @@
 
-FROM python:3.11-slim AS builder
-RUN apt-get update && apt-get install -y --no-install-recommends \  
+FROM python:3.11-slim-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg2 \
+    ca-certificates \
     unixodbc-dev \
     build-essential \
-    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/12/prod.list \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+       | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" \
        > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
@@ -31,7 +34,7 @@ print("All AI models downloaded.")
 PY
 
 
-FROM python:3.11-slim AS runtime
+FROM python:3.11-slim-bookworm AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc \
     curl \
