@@ -1,4 +1,5 @@
-#notes.md
+#questi cambiano ad ogni mount di chainlit, quindi non versionarli su git
+chainlit_app/.chainlit/translations/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
