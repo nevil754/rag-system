@@ -102,7 +102,7 @@ async def get_document_status(
         raise HTTPException( status_code=404, detail="Job non trovato" )
     return IngestionJobSchema.model_validate( dict(job._mapping) )
 
-@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_document(
     document_id: str,
     tenant: CurrentTenant,

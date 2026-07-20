@@ -63,7 +63,7 @@ async def list_users( tenant: AdminOnly, db: CurrentDB ) -> list[UserSchema]:
     )
     return [ UserSchema.model_validate(dict(r._mapping)) for r in rows ]
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def deactivate_user(user_id: str, tenant: AdminOnly, db: CurrentDB) -> None:
     await db.execute(
         text("UPDATE users SET is_active = 0 WHERE id = :id"),

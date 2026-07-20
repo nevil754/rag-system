@@ -15,7 +15,7 @@ async def create_collection(
     db: CurrentDB,
 ) -> CollectionSchema:
     from uuid import uuid4
-    from python_slugify import slugify
+    from slugify import slugify
 
     coll_id = str(uuid4())
     qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"
@@ -59,7 +59,7 @@ async def list_collections(
     items = [CollectionSchema.model_validate(dict(r._mapping)) for r in rows]
     return PaginatedResponse.build( items=items, total=total, page=page, page_size=page_size )
 
-@router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_collection(
     collection_id: str,
     tenant: AdminOnly,
