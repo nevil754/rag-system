@@ -24,7 +24,7 @@ CREATE TABLE shared.tenants (
     id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
     slug            NVARCHAR(100)       NOT NULL,
     display_name    NVARCHAR(255)       NOT NULL,
-    plan            NVARCHAR(50)        NOT NULL DEFAULT 'starter',
+    [plan]            NVARCHAR(50)        NOT NULL DEFAULT 'starter',
     is_active       BIT                 NOT NULL DEFAULT 1,
     max_docs        INT                 NOT NULL DEFAULT 500,
     max_users       INT                 NOT NULL DEFAULT 10,
