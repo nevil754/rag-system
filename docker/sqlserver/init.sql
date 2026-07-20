@@ -58,8 +58,10 @@ CREATE TABLE shared.audit_log (
 );
 GO
 
-CREATE INDEX IX_audit_tenant_date ON shared.audit_log (tenant_id, created_at DESC);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_audit_tenant_date')
+    CREATE INDEX IX_audit_tenant_date ON shared.audit_log (tenant_id, created_at DESC);
 GO
+
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
