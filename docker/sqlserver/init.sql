@@ -34,7 +34,7 @@ CREATE TABLE shared.tenants (
     updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_tenants PRIMARY KEY (id),
     CONSTRAINT UQ_tenants_slug UNIQUE (slug),
-    CONSTRAINT CK_tenants_plan CHECK (plan IN ('starter','pro','enterprise'))
+    CONSTRAINT CK_tenants_plan CHECK ([plan] IN ('starter','pro','enterprise'))
 );
 GO
 
@@ -120,7 +120,7 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM shared.tenants WHERE slug = @slug)
     BEGIN
-        INSERT INTO shared.tenants (slug, display_name, plan)
+        INSERT INTO shared.tenants (slug, display_name, [plan])
         VALUES (@slug, @display_name, @plan);
     END
 
