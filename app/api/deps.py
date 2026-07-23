@@ -60,7 +60,7 @@ async def _validate_api_key(api_key: str) -> TenantContext | None:
     try:
         key_hash = hash_api_key(api_key)
 
-        async with tenant_db._async_factory() as session:
+        async with tenant_db.async_factory() as session:
             from sqlalchemy import text
             result = await session.execute(
                 text("""
