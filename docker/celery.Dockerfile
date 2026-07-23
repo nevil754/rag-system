@@ -50,7 +50,6 @@ COPY --from=builder /root/.cache /root/.cache
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    #PYTHONFAULTHANDLER=1 \
     C_FORCE_ROOT=1
 
 WORKDIR /app
