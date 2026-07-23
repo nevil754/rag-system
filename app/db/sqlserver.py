@@ -172,7 +172,7 @@ def get_sync_engine():
         max_overflow=10,
         pool_pre_ping=True,
         pool_recycle=3600,
-        echo=settings.app_debug,
+        echo=False  #settings.app_debug. cosi attualmente non ho il doppio log 1 x loguru 1 x sqlalchemy
     )
     logger.info("Engine SQL Server sincrono creato")
     return engine
@@ -191,7 +191,7 @@ def get_async_engine():
         max_overflow=10,
         pool_pre_ping=True,
         pool_recycle=3600,
-        echo=settings.app_debug,
+        echo=False  #settings.app_debug,
     )
     logger.info("Engine SQL Server asincrono creato")
     return engine
