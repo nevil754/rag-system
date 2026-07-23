@@ -236,6 +236,7 @@ services:
       /bin/bash -c "
       /opt/mssql/bin/sqlservr &
       SQLSERVR_PID=$$!
+      trap 'kill -TERM $$SQLSERVR_PID' TERM INT
       bash /init/entrypoint.sh
       wait $$SQLSERVR_PID"
     healthcheck:
@@ -244,7 +245,8 @@ services:
              "-U", "SA",
              "-P", "${SQLSERVER_PASSWORD}",
              "-C",
-             "-Q", "SELECT 1"]
+             "-Q", "SET NOCOUNT ON; USE RAGChat; SELECT 1",
+             "-b"]
       interval: 10s
       timeout: 5s
       retries: 10
