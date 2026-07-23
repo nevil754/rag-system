@@ -43,7 +43,7 @@ class UserProfile(BaseModel):
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest) -> TokenResponse:
 
-    async with tenant_db._async_factory() as session:
+    async with tenant_db.async_factory() as session:
         tenant_row = await session.execute(
             text("""
                 SELECT id, slug, is_active

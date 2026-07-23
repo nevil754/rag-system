@@ -22,7 +22,7 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
     deleted_keys = loop.run_until_complete( redis.flush_tenant() )
     loop.close()
     schema_name = "tenant_" + tenant_slug.replace("-", "_")
-    with tenant_db._sync_factory() as session:
+    with tenant_db.sync_factory() as session:
         session.execute(
             text("UPDATE shared.tenants SET is_active = 0 WHERE slug = :slug"),
             {"slug": tenant_slug}

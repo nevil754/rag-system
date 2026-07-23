@@ -26,7 +26,7 @@ def rollup_usage() -> dict:
     from app.core.redis_client import get_redis
 
     async def _get_all_tenants():
-        async with tenant_db._async_factory() as session:
+        async with tenant_db.async_factory() as session:
             result = await session.execute(
                 text("SELECT id, slug FROM shared.tenants WHERE is_active = 1")
             )
@@ -55,7 +55,7 @@ def rollup_usage() -> dict:
         if stats["queries_count"] == 0 and stats["docs_ingested"] == 0:
             continue
 
-        with tenant_db._sync_factory() as session:
+        with tenant_db.sync_factory() as session:
             session.execute(
                 text("""
                     MERGE shared.usage_stats AS target

@@ -46,7 +46,7 @@ async def create_tenant(
 async def list_tenants(tenant: CurrentTenant) -> list[dict]:
     _require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
-    async with tenant_db._async_factory() as session:
+    async with tenant_db.async_factory() as session:
         rows = await session.execute(
             text("""
                 SELECT id, slug, display_name, plan, is_active, created_at
@@ -60,7 +60,7 @@ async def list_tenants(tenant: CurrentTenant) -> list[dict]:
 async def disable_tenant(slug: str, tenant: CurrentTenant) -> dict:
     _require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
-    async with tenant_db._async_factory() as session:
+    async with tenant_db.async_factory() as session:
         await session.execute(
             text("UPDATE shared.tenants SET is_active = 0 WHERE slug = :slug"),
             {"slug": slug}

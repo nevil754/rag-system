@@ -13,7 +13,7 @@ async def provision_tenant(
 ) -> dict:
     logger.info(f"Provisioning tenant: {slug}")
     await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan )
-    async with tenant_db._async_factory() as session:
+    async with tenant_db.async_factory() as session:
         from sqlalchemy import text
         row = await session.execute(
             text("SELECT id FROM shared.tenants WHERE slug = :slug"),
