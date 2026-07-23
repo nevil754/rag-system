@@ -232,13 +232,15 @@ services:
       MSSQL_PID: "Developer"
       MSSQL_COLLATION: "Latin1_General_100_CI_AS_SC_UTF8"
       MSSQL_MEMORY_LIMIT_MB: 2048
-    command: >
-      /bin/bash -c "
-      /opt/mssql/bin/sqlservr &
-      SQLSERVR_PID=$$!
-      trap 'kill -TERM $$SQLSERVR_PID' TERM INT
-      bash /init/entrypoint.sh
-      wait $$SQLSERVR_PID"
+    command:
+      - /bin/bash
+      - -c
+      - |
+        /opt/mssql/bin/sqlservr &
+        SQLSERVR_PID=$$!
+        trap 'kill -TERM $$SQLSERVR_PID' TERM INT
+        bash /init/entrypoint.sh
+        wait $$SQLSERVR_PID
     healthcheck:
       test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd",
              "-S", "localhost",
@@ -249,7 +251,7 @@ services:
              "-b"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 18
       start_period: 30s
     networks:
       - rag-network
