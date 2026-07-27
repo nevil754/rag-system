@@ -6,6 +6,7 @@ class CollectionCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: str | None = None
 
+
 class CollectionSchema(BaseModel):
     id: str
     name: str
@@ -15,6 +16,7 @@ class CollectionSchema(BaseModel):
     created_at: datetime
     class Config:
         from_attributes = True
+
 
 class DocumentSchema(BaseModel):
     id: str
@@ -32,6 +34,7 @@ class DocumentSchema(BaseModel):
     class Config:
         from_attributes = True
 
+
 class IngestionJobSchema(BaseModel):
     id: str
     document_id: str
@@ -46,10 +49,12 @@ class IngestionJobSchema(BaseModel):
     class Config:
         from_attributes = True
 
+
 class UploadResponse(BaseModel):
     document_id: str
     job_id: str
     task_id: str
     status: str = "queued"
     message: str = "Documento in coda per l'elaborazione"
+
 

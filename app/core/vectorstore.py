@@ -6,6 +6,7 @@ from qdrant_client import AsyncQdrantClient, QdrantClient
 from qdrant_client.http import models as qmodels
 from qdrant_client.http.exceptions import UnexpectedResponse
 
+
 @lru_cache(maxsize=1)
 def get_qdrant_client() -> QdrantClient:
     from app.core.settings import get_settings
@@ -16,6 +17,7 @@ def get_qdrant_client() -> QdrantClient:
         kwargs["api_key"] = settings.qdrant_api_key
     return QdrantClient(**kwargs)
 
+
 @lru_cache(maxsize=1)
 def get_async_qdrant_client() -> AsyncQdrantClient:
     from app.core.settings import get_settings
@@ -25,13 +27,16 @@ def get_async_qdrant_client() -> AsyncQdrantClient:
         kwargs["api_key"] = settings.qdrant_api_key
     return AsyncQdrantClient(**kwargs)  
 
+
 def get_collection_name(tenant_slug: str) -> str:
     safe_slug = tenant_slug.replace("-", "_").lower()
     return f"tenant_{safe_slug}_documents"
 
+
 def get_memory_collection_name(tenant_slug: str) -> str:
     safe_slug = tenant_slug.replace("-", "_").lower()
     return f"tenant_{safe_slug}_memory"
+
 
 def ensure_collection(
     tenant_slug: str,
@@ -51,10 +56,9 @@ def ensure_collection(
         client.delete_collection(collection_name)
     except UnexpectedResponse:
         pass
-    dimension = get_embedding_dimension()
+    dimension = get_embedding_dimension()  
 
     vectors_config: dict[str, Any] = {
-
         "dense": qmodels.VectorParams(
             size=dimension,
             distance=qmodels.Distance[settings.qdrant_distance],
@@ -103,10 +107,12 @@ def ensure_collection(
     )
     return collection_name
 
+
 async def aensure_collection( tenant_slug: str, force_recreate: bool = False ) -> str:
     import asyncio
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor( None, ensure_collection, tenant_slug, force_recreate )
+
 
 async def adelete_tenant_collections(tenant_slug: str) -> None:
     client = get_async_qdrant_client()
@@ -117,4 +123,6 @@ async def adelete_tenant_collections(tenant_slug: str) -> None:
             logger.info(f"Collection cancellata: {name}")
         except Exception as e:
             logger.warning(f"Impossibile cancellare collection {name}: {e}")
+
+
 

@@ -17,8 +17,8 @@ def get_embedding_model() -> Any:
     model = TextEmbedding(
         model_name=settings.embeddings_model,
         cache_dir=settings.embeddings_cache_dir,
-        max_length=512,
-        threads=4,
+        max_length=512,   #ma xlenght context window
+        threads=4,   #threads per processare i testi
     )
     logger.info("Modello embedding caricato", model=settings.embeddings_model)
     return model
@@ -37,8 +37,7 @@ def embed_texts( texts: list[str] ) -> list[list[float]]:
 def embed_query(text: str) -> list[float]:
     model = get_embedding_model()
     vectors = list( model.query_embed([text]) )
-
-    return vectors[0].tolist()
+    return vectors[0].tolist()   #intanto con 'text' in input hai solo 1 , quindi crea solo 1 vettore
 
 async def aembed_texts(texts: list[str]) -> list[list[float]]:
     loop = asyncio.get_running_loop()
@@ -72,7 +71,7 @@ async def aembed_sparse_query(text: str) -> dict:
 
 def get_embedding_dimension() -> int:
     model = get_embedding_model()
-    test_vector = list(model.embed(["test"]))[0]
+    test_vector = list(model.embed(["test"]))[0]   #dummy x ottenere la dimension del vettore
     return len(test_vector)
 
 

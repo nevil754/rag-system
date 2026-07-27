@@ -8,6 +8,7 @@ from app.schemas.document import CollectionCreate, CollectionSchema
 
 router = APIRouter(prefix="/collections", tags=["collections"])
 
+
 @router.post("", response_model=CollectionSchema, status_code=status.HTTP_201_CREATED)
 async def create_collection(
     body: CollectionCreate,
@@ -15,7 +16,7 @@ async def create_collection(
     db: CurrentDB,
 ) -> CollectionSchema:
     from uuid import uuid4
-    from slugify import slugify
+    from slugify import slugify   #x convert str normale in uno slug, cioè una versione "URL-friendly"
 
     coll_id = str(uuid4())
     qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"
