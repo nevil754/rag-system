@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Annotated, AsyncGenerator
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.redis_client import TenantRedis
@@ -31,14 +31,27 @@ class TenantContext:
         return self.user_role == "viewer"
 
 async def get_current_tenant(
+    request: Request,
     authorization: Annotated[str | None, Header()] = None,
     x_api_key: Annotated[str | None, Header(alias="X-API-Key")] = None,
 ) -> TenantContext:
+
+    state_tenant_id = getattr(request.state, "tenant_id", None)
+    state_user_id = getattr(request.state, "user_id", None)
+    if state_tenant_id and state_user_id:
+        return TenantContext(
+            tenant_id=state_tenant_id,
+            tenant_slug=getattr(request.state, "tenant_slug", "") or "",
+            user_id=state_user_id,
+            user_role=getattr(request.state, "user_role", None) or "user",
+            user_email=getattr(request.state, "user_email", None) or "",
+        )
+    
     if authorization:
         token = extract_bearer_token(authorization)
         if token:
             payload = decode_access_token(token)
-            if payload:
+            if payload and not payload.get("is_platform"):
                 return TenantContext(
                     tenant_id=payload.get("tenant_id", ""),
                     tenant_slug=payload.get("tenant_slug", ""),
@@ -72,7 +85,7 @@ async def _validate_api_key(api_key: str) -> TenantContext | None:
                     JOIN shared.tenants t ON ak.tenant_id = t.id
                     WHERE ak.key_hash = :hash
                       AND ak.is_active = 1
-                      AND (ak.expires_at IS NULL OR ak.expires_at > GETUTCDATE())
+                      AND (ak.expires_at IS NULL OR ak.expires_at > SYSUTCDATETIME())
                 """),
                 {"hash": key_hash}
             )
@@ -80,7 +93,7 @@ async def _validate_api_key(api_key: str) -> TenantContext | None:
             if not row:
                 return None
             await session.execute(
-                text("UPDATE shared.api_keys SET last_used = GETUTCDATE() WHERE key_hash = :hash"),
+                text("UPDATE shared.api_keys SET last_used = SYSUTCDATETIME() WHERE key_hash = :hash"),
                 {"hash": key_hash}
             )
             await session.commit()
@@ -116,8 +129,45 @@ async def require_admin(
         )
     return tenant
 
+
+
+async def require_superadmin(
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+) -> TenantContext:
+    if tenant.user_role != "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accesso riservato ai superadmin",
+        )
+    return tenant
+
+class PlatformContext:
+    def __init__(self, platform_user_id: str, email: str):
+        self.platform_user_id = platform_user_id
+        self.email = email
+
+async def get_current_platform_user(
+    authorization: Annotated[str | None, Header()] = None,
+) -> PlatformContext:
+    token = extract_bearer_token(authorization)
+    if token:
+        payload = decode_access_token(token)
+        if payload and payload.get("is_platform"):
+            return PlatformContext(
+                platform_user_id=payload.get("sub", ""),
+                email=payload.get("email", ""),
+            )
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token platform non valido o scaduto",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+
 CurrentTenant = Annotated[TenantContext, Depends(get_current_tenant)]
 CurrentDB = Annotated[AsyncSession, Depends(get_db)]
 CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
 AdminOnly = Annotated[TenantContext, Depends(require_admin)]
-
+SuperAdminOnly = Annotated[TenantContext, Depends(require_superadmin)]
+CurrentPlatformUser = Annotated[PlatformContext, Depends(get_current_platform_user)]

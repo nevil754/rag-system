@@ -103,10 +103,63 @@ CREATE TABLE shared.api_keys (
 );
 GO
 
+
+
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    JOIN sys.schemas s ON t.schema_id = s.schema_id
+    WHERE s.name = 'shared' AND t.name = 'platform_users'
+)
+CREATE TABLE shared.platform_users (
+    id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
+    email           NVARCHAR(255)       NOT NULL,
+    full_name       NVARCHAR(255)       NULL,
+    password_hash   NVARCHAR(255)       NOT NULL,
+    is_active       BIT                 NOT NULL DEFAULT 1,
+    created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_platform_users PRIMARY KEY (id),
+    CONSTRAINT UQ_platform_users_email UNIQUE (email)
+);
+GO
+
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('shared.tenants') AND name = 'owner_user_id'
+)
+    ALTER TABLE shared.tenants ADD owner_user_id UNIQUEIDENTIFIER NULL;
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_tenants_owner'
+)
+    ALTER TABLE shared.tenants
+    ADD CONSTRAINT FK_tenants_owner FOREIGN KEY (owner_user_id)
+    REFERENCES shared.platform_users(id);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform.local')
+    INSERT INTO shared.platform_users (email, full_name, password_hash)
+    VALUES (
+        'admin@platform.local',
+        'Platform Admin',
+        '$2b$12$SBT65yjDI0Z4fniKLfaYKe/W3I.dU1UiELRk01anItj6s9hxlWlBe'
+    );
+GO
+
+
+
+
+
+
+
 CREATE OR ALTER PROCEDURE shared.sp_provision_tenant
     @slug           NVARCHAR(100),
     @display_name   NVARCHAR(255),
-    @plan           NVARCHAR(50) = 'starter'
+    @plan           NVARCHAR(50) = 'starter',
+    @owner_user_id  UNIQUEIDENTIFIER = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -122,8 +175,14 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM shared.tenants WHERE slug = @slug)
     BEGIN
-        INSERT INTO shared.tenants (slug, display_name, [plan])
-        VALUES (@slug, @display_name, @plan);
+        INSERT INTO shared.tenants (slug, display_name, [plan], owner_user_id)
+        VALUES (@slug, @display_name, @plan, @owner_user_id);
+    END
+    ELSE IF @owner_user_id IS NOT NULL
+    BEGIN
+        UPDATE shared.tenants
+        SET owner_user_id = @owner_user_id
+        WHERE slug = @slug AND owner_user_id IS NULL;
     END
 
     SET @sql = '

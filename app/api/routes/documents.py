@@ -135,7 +135,7 @@ async def delete_document(
     except Exception as e:
         logger.warning(f"Errore cancellazione vettori Qdrant: {e}")
     await db.execute(
-        text("UPDATE documents SET status = 'deleted', updated_at = GETUTCDATE() WHERE id = :id"),
+        text("UPDATE documents SET status = 'deleted', updated_at = SYSUTCDATETIME() WHERE id = :id"),
         {"id": document_id}
     )
     logger.info(f"Documento cancellato: {document_id}", tenant=tenant.tenant_slug)

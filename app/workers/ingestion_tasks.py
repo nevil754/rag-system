@@ -114,7 +114,7 @@ def ingest_document(
                     SET status = :status,
                         error_msg = :err,
                         retry_count = :retries,
-                        finished_at = CASE WHEN :is_final = 1 THEN GETUTCDATE() ELSE NULL END
+                        finished_at = CASE WHEN :is_final = 1 THEN SYSUTCDATETIME() ELSE NULL END
                     WHERE document_id = :doc_id
                 """),
                 {
