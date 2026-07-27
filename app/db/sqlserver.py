@@ -122,6 +122,7 @@ class TenantDB:
         slug: str,
         display_name: str,
         plan: str = "starter",
+        owner_user_id: str | None = None,
     ) -> None:
         async with self.async_factory() as session:
             try:
@@ -130,9 +131,15 @@ class TenantDB:
                         EXEC shared.sp_provision_tenant
                             @slug = :slug,
                             @display_name = :display_name,
-                            @plan = :plan
+                            @plan = :plan,
+                            @owner_user_id = CAST(:owner_user_id AS UNIQUEIDENTIFIER)
                     """),
-                    {"slug": slug, "display_name": display_name, "plan": plan}
+                    {
+                        "slug": slug, 
+                        "display_name": display_name, 
+                        "plan": plan,
+                        "owner_user_id": owner_user_id,
+                    }
                 )
                 await session.commit()
                 logger.info(
@@ -197,3 +204,4 @@ def get_async_engine():
     return engine
 
 tenant_db = TenantDB()
+

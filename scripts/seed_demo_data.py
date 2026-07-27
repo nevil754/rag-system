@@ -39,12 +39,33 @@ DEMO_DOCUMENTS = [
     },
 ]
 
+DEFAULT_PLATFORM_ADMIN_EMAIL = "admin@platform.local"
+
+
 async def main():
     print(f"Seeding dati demo per tenant: {DEMO_TENANT_SLUG}")
     from app.db.sqlserver import tenant_db
     from app.core.security import hash_password
     from sqlalchemy import text
     from uuid import uuid4
+
+
+    async with tenant_db.async_factory() as session:
+        result = await session.execute(
+            text("""
+                UPDATE shared.tenants
+                SET owner_user_id = (
+                    SELECT id FROM shared.platform_users WHERE email = :admin_email
+                )
+                WHERE slug = :slug AND owner_user_id IS NULL
+            """),
+            {"admin_email": DEFAULT_PLATFORM_ADMIN_EMAIL, "slug": DEMO_TENANT_SLUG}
+        )
+        await session.commit()
+        if result.rowcount:
+            print(f"✓ Space '{DEMO_TENANT_SLUG}' collegato all'admin di default ({DEFAULT_PLATFORM_ADMIN_EMAIL})")
+
+
 
     async with tenant_db.aget_session(DEMO_TENANT_SLUG) as session:
         existing = await session.execute(
@@ -66,6 +87,7 @@ async def main():
             print(f"✓ Utente demo creato: {DEMO_USER_EMAIL} / {DEMO_USER_PASSWORD}")
         else:
             print(f"  Utente demo già esistente: {DEMO_USER_EMAIL}")
+
 
     import tempfile
     import os
