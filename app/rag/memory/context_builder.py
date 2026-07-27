@@ -7,7 +7,7 @@ def build_rag_context(
     chunks: list[RetrievedChunk],
     session_messages: list[dict],
     user_facts: list[dict] | None = None,
-    max_context_chars: int = 12000,
+    max_context_chars: int = 12000,   #!!
 ) -> dict[str, str]:
     context_parts = []
     total_chars = 0
@@ -19,7 +19,7 @@ def build_rag_context(
         chunk_text = f"{source_label}\n{chunk.text}"
         chunk_chars = len(chunk_text)
         if total_chars + chunk_chars > max_context_chars:
-            logger.debug(f"Contesto troncato a {i-1} chunk per limite caratteri!")
+            logger.debug(f"Contesto troncato a {i-1} chunk per limite caratteri!")  #!!
             break
         context_parts.append(chunk_text)
         total_chars += chunk_chars

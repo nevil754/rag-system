@@ -31,6 +31,7 @@ class TenantContext:
     def is_viewer(self) -> bool:
         return self.user_role == "viewer"
 
+
 async def get_current_tenant(
     request: Request,
     authorization: Annotated[str | None, Header()] = None,
@@ -167,10 +168,16 @@ async def get_current_platform_user(
 
 
 CurrentTenant = Annotated[TenantContext, Depends(get_current_tenant)]
+
 CurrentDB = Annotated[AsyncSession, Depends(get_db)]
+
 CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
+
 AdminOnly = Annotated[TenantContext, Depends(require_admin)]
+
 SuperAdminOnly = Annotated[TenantContext, Depends(require_superadmin)]
+
 CurrentPlatformUser = Annotated[PlatformContext, Depends(get_current_platform_user)]
+
 
 

@@ -28,8 +28,8 @@ class TenantDB:
         if self._sync_factory is None:
             self._sync_factory = sessionmaker(
                 bind=get_sync_engine(),
-                autocommit=False,
-                autoflush=False,
+                autocommit=False,  #SQLAlchemy non esegue automaticamente il COMMIT dopo ogni operazione
+                autoflush=False,   #"Invia al database tutte le modifiche pendenti, ma senza fare COMMIT."
             )
         return self._sync_factory
 
@@ -45,7 +45,7 @@ class TenantDB:
         return self._async_factory                  
 
 
-    @contextmanager
+    @contextmanager   #si occupa di gestire il contesto di esecuzione del codice, garantendo che le risorse vengano rilasciate correttamente al termine dell'esecuzione.
     def get_session(self, tenant_slug: str) -> Generator[Session, None, None]:
         session = self.sync_factory()
         impersonated = False
@@ -87,6 +87,8 @@ class TenantDB:
                         await session.commit()
                     except Exception:
                         pass
+
+
 
     def _set_schema_sync(self, session: Session, tenant_slug: str) -> None:
         schema_name = _slug_to_schema(tenant_slug)
@@ -163,6 +165,7 @@ class TenantDB:
             logger.error(f"SQL Server ping fallito: {e}")
             return False
 
+
 def _slug_to_schema(slug: str) -> str:
     return "tenant_" + slug.replace("-", "_").lower()
 
@@ -175,10 +178,10 @@ def get_sync_engine():
     settings = get_settings()
     engine = create_engine(
         settings.sqlserver_url,
-        pool_size=5,
-        max_overflow=10,
-        pool_pre_ping=True,
-        pool_recycle=3600,
+        pool_size=5,   #num connessioni 'normali' mantenute nel pool, e.g.5 vuol dire 5 connessioni persistenti aperte
+        max_overflow=10,   #num connessioni 'extra' mantenute nel pool
+        pool_pre_ping=True,   #controlla la connessione prima di ogni query
+        pool_recycle=3600,   #ricicla le connessioni dopo 3600 secondi (1 ora) per evitare timeout
         echo=False  #settings.app_debug. cosi attualmente non ho il doppio log 1 x loguru 1 x sqlalchemy
     )
     logger.info("Engine SQL Server sincrono creato")

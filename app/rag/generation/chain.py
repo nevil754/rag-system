@@ -67,7 +67,7 @@ async def astream_rag_chain(
         yield get_no_context_message()
         return
     ctx = build_rag_context(chunks, session_messages)
-    system_msg = SystemMessage( content=get_rag_system_prompt(tenant_name) )
+    system_msg = SystemMessage( content=get_rag_system_prompt(tenant_name) )   #SystemMessage(le istruzioni) è quello che è brother of HumanMessage(quello che chiede l'utente) e AIMessage(la risposta del modello)
     user_msg = HumanMessage( content=get_rag_user_prompt(
         context=ctx["context"],
         history=ctx["history"],

@@ -172,13 +172,14 @@ class ChatService:
             "sources": sources,
             "latency_ms": latency_ms,
         }
-        await self.redis.set_query_cache(query_hash, json.dumps(response_to_cache))
+        await self.redis.set_query_cache(query_hash, json.dumps(response_to_cache))   #ok attualmente non gli passo il ttl il time-to-live
         yield "\x1e" + json.dumps({
             "sources": sources,
             "conversation_id": conv_id,
             "latency_ms": latency_ms,
             "hallucination_score": round(hall_score, 3),
         })
+
 
     async def _save_messages(
         self,
@@ -205,10 +206,10 @@ class ChatService:
         await self.db.execute(
             text("""
                 INSERT INTO messages (conversation_id, role, content)
-                VALUES (:conv_id, 'user', :content)
+                VALUES (:conv_id, 'user', :content)   
             """),
             {"conv_id": conv_id, "content": question}
-        )
+        )  #TODO usa di default 'user'! check in future all ok
 
         result = await self.db.execute(
             text("""
@@ -247,5 +248,5 @@ class ChatService:
 
 def _hash_query(question: str, conv_id: str) -> str:
     normalized = question.strip().lower()
-    return hashlib.md5(f"{conv_id}:{normalized}".encode()).hexdigest()
+    return hashlib.md5(f"{conv_id}:{normalized}".encode()).hexdigest()  #hasha usando MD5 per ottenere un hash unico della query e della conversazione
 

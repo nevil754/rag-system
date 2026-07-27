@@ -17,7 +17,7 @@ def get_rag_user_prompt(
 ) -> str:
     prompts = _load_prompts()
     template = prompts.get("rag", {}).get("main", _DEFAULT_RAG)
-    return template.format(
+    return template.format(   #replace i segnaposto ({...}) presenti in una stringa con i valori che gli passi
         context=context,
         history=history,
         question=question,

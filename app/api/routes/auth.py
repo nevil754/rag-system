@@ -190,6 +190,7 @@ async def refresh_token(tenant: CurrentTenant) -> TokenResponse:
         tenant_slug=tenant.tenant_slug,
     )
 
+
 @router.get("/me", response_model=UserProfile)
 async def get_profile(tenant: CurrentTenant) -> UserProfile:
     async with tenant_db.aget_session(tenant.tenant_slug) as session:
@@ -208,6 +209,7 @@ async def get_profile(tenant: CurrentTenant) -> UserProfile:
         tenant_id=tenant.tenant_id,
         tenant_slug=tenant.tenant_slug,
     )
+
 
 @router.post("/logout")
 async def logout(tenant: CurrentTenant) -> dict:
