@@ -7,6 +7,7 @@ from app.core.redis_client import TenantRedis
 from app.core.security import decode_access_token, extract_bearer_token, hash_api_key
 from app.db.sqlserver import tenant_db
 
+
 class TenantContext:
     def __init__(
         self,
@@ -171,3 +172,5 @@ CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
 AdminOnly = Annotated[TenantContext, Depends(require_admin)]
 SuperAdminOnly = Annotated[TenantContext, Depends(require_superadmin)]
 CurrentPlatformUser = Annotated[PlatformContext, Depends(get_current_platform_user)]
+
+

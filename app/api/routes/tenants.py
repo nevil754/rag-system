@@ -2,7 +2,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import text
-from app.api.deps import CurrentTenant
+from app.api.deps import SuperAdminOnly
 from app.services.tenant_service import provision_tenant
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
@@ -20,19 +20,19 @@ class TenantResponse(BaseModel):
     plan: str
     admin_user_id: str | None = None
 
-def _require_superadmin(tenant: CurrentTenant) -> None:
-    if tenant.user_role != "superadmin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accesso riservato ai superadmin",
-        )
+# def _require_superadmin(tenant: CurrentTenant) -> None:
+#     if tenant.user_role != "superadmin":
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Accesso riservato ai superadmin",
+#         )
 
 @router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     body: TenantCreate,
-    tenant: CurrentTenant,
+    tenant: SuperAdminOnly,
 ) -> TenantResponse:
-    _require_superadmin(tenant)
+    #_require_superadmin(tenant)
     result = await provision_tenant(
         slug=body.slug,
         display_name=body.display_name,
@@ -43,8 +43,8 @@ async def create_tenant(
     return TenantResponse(**result)
 
 @router.get("")
-async def list_tenants(tenant: CurrentTenant) -> list[dict]:
-    _require_superadmin(tenant)
+async def list_tenants(tenant: SuperAdminOnly) -> list[dict]:
+    #_require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
     async with tenant_db.async_factory() as session:
         rows = await session.execute(
@@ -57,8 +57,8 @@ async def list_tenants(tenant: CurrentTenant) -> list[dict]:
         return [ dict(r._mapping) for r in rows ]
 
 @router.patch("/{slug}/disable")
-async def disable_tenant(slug: str, tenant: CurrentTenant) -> dict:
-    _require_superadmin(tenant)
+async def disable_tenant(slug: str, tenant: SuperAdminOnly) -> dict:
+    #_require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
     async with tenant_db.async_factory() as session:
         await session.execute(
