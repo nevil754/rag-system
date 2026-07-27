@@ -126,7 +126,7 @@ async def login(request: LoginRequest) -> TokenResponse:
     logger.info("Login effettuato", user_id=str(user.id), tenant=request.tenant_slug)
     return TokenResponse(
         access_token=token,
-        expires_in=settings.jwt_expire_minutes * 60,  #access token valido 1h
+        expires_in=settings.jwt_expire_minutes * 60,   #access token valido 1h
         user_id=str(user.id),
         user_role=user.role,
         tenant_slug=tenant.slug,
@@ -159,7 +159,7 @@ async def platform_login(request: PlatformLoginRequest) -> PlatformTokenResponse
     token = create_access_token(data={
         "sub": str(user.id),
         "email": user.email,
-        "is_platform": True,
+        "is_platform": True,  
     })
     logger.info("Login platform effettuato", platform_user_id=str(user.id))
     return PlatformTokenResponse(
@@ -223,7 +223,7 @@ async def logout(tenant: CurrentTenant) -> dict:
         conv_ids = [str(r.id) for r in rows]
     deleted = 0
     for conv_id in conv_ids:
-        await redis.clear_session(conv_id)
+        await redis.clear_session(conv_id)   #pulisci cache redis per quegli conv_ids, quindi l'utente dovra rifare login 
         deleted += 1
     logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)
     return {"message": "Logout effettuato", "sessions_deleted": deleted}

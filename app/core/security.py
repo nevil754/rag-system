@@ -10,7 +10,7 @@ from app.core.settings import get_settings
 
 settings = get_settings()
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)   #bcrypt come algh per le password, deprecated auto "Se un utente ha ancora un hash vecchio, consideralo valido ma aggiornamelo quando fa login", bcrypt__rounds=12 indica quanto deve lavorare il computer (12 è un buon equilibrio)
 
 def hash_password(plain: str) -> str:
     return _pwd_context.hash(plain)
@@ -20,7 +20,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(
     data: dict[str, Any],
-    expires_delta: timedelta | None = None,
+    expires_delta: timedelta | None = None,   
 ) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (
@@ -31,7 +31,7 @@ def create_access_token(
     token = jwt.encode(
         to_encode,
         settings.jwt_secret_key,
-        algorithm=settings.jwt_algorithm,
+        algorithm=settings.jwt_algorithm,   #attualmente uso HS256
     )
     return token
 

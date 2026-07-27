@@ -101,7 +101,7 @@ class AppSettings(BaseSettings):
     cache_query_ttl_seconds: int = 3600
     cache_session_ttl_seconds: int = 86400
 
-    jwt_secret_key: str = Field(default="change-me-in-production-min-32-chars")
+    jwt_secret_key: str = Field(default="change-me-in-production-min-32-chars")   #viene usato da create_access_token
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
     api_key_length: int = 32

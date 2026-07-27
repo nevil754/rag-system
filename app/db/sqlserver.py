@@ -71,7 +71,7 @@ class TenantDB:
         self, tenant_slug: str
     ) -> AsyncGenerator[AsyncSession, None]:
         async with self.async_factory() as session:
-            impersonated = False
+            impersonated = False    #flag boolean, x dire "Sono riuscito a impersonare il tenant?"
             try:
                 await self._set_schema_async(session, tenant_slug)
                 impersonated = True
@@ -79,11 +79,11 @@ class TenantDB:
                 await session.commit()
             except Exception:
                 await session.rollback()
-                raise
+                raise   #passa l'exception al chiamante
             finally:
                 if impersonated:
                     try:
-                        await session.execute(text("REVERT"))
+                        await session.execute(text("REVERT"))   #se era stato fatto e.g.EXECUTE AS USER = 'tenant_acme', ora con questo invece torni all'user origine e.g. AppLogin
                         await session.commit()
                     except Exception:
                         pass
