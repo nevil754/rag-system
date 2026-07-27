@@ -32,6 +32,19 @@ class LoginRequest(BaseModel):
     password: str
     tenant_slug: str
 
+
+class PlatformLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class PlatformTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    platform_user_id: str
+    email: str
+
+
 class UserProfile(BaseModel):
     user_id: str
     email: str
@@ -39,6 +52,7 @@ class UserProfile(BaseModel):
     role: str
     tenant_id: str
     tenant_slug: str
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest) -> TokenResponse:
@@ -112,11 +126,52 @@ async def login(request: LoginRequest) -> TokenResponse:
     logger.info("Login effettuato", user_id=str(user.id), tenant=request.tenant_slug)
     return TokenResponse(
         access_token=token,
-        expires_in=settings.jwt_expire_minutes * 60,
+        expires_in=settings.jwt_expire_minutes * 60,  #access token valido 1h
         user_id=str(user.id),
         user_role=user.role,
         tenant_slug=tenant.slug,
     )
+
+
+
+@router.post("/platform-login", response_model=PlatformTokenResponse)
+async def platform_login(request: PlatformLoginRequest) -> PlatformTokenResponse:
+    async with tenant_db.async_factory() as session:
+        row = await session.execute(
+            text("""
+                SELECT id, email, password_hash, is_active
+                FROM shared.platform_users
+                WHERE email = :email
+            """),
+            {"email": request.email}
+        )
+        user = row.fetchone()
+    if not user or not verify_password(request.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenziali non valide",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account disabilitato",
+        )
+    token = create_access_token(data={
+        "sub": str(user.id),
+        "email": user.email,
+        "is_platform": True,
+    })
+    logger.info("Login platform effettuato", platform_user_id=str(user.id))
+    return PlatformTokenResponse(
+        access_token=token,
+        expires_in=settings.jwt_expire_minutes * 60,
+        platform_user_id=str(user.id),
+        email=user.email,
+    )
+
+
+
+
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(tenant: CurrentTenant) -> TokenResponse:

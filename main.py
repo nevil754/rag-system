@@ -84,6 +84,9 @@ def create_app() -> FastAPI:
     from app.api.routes.jobs import router as jobs_router
     app.include_router(jobs_router, prefix="/api/v1")
 
+    from app.api.routes.spaces import router as spaces_router
+    app.include_router(spaces_router, prefix="/api/v1")
+
     return app
 
 async def _check_services() -> None:

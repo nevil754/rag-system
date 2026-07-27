@@ -14,6 +14,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
         request.state.tenant_slug = None
         request.state.user_id = None
         request.state.user_role = None
+        request.state.user_email = None
+
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)
 
@@ -21,11 +23,12 @@ class TenantMiddleware(BaseHTTPMiddleware):
         token = extract_bearer_token(auth_header)
         if token:
             payload = decode_access_token(token)
-            if payload:
+            if payload and not payload.get("is_platform"):
 
                 request.state.tenant_id = payload.get("tenant_id")
                 request.state.tenant_slug = payload.get("tenant_slug")
                 request.state.user_id = payload.get("sub")
                 request.state.user_role = payload.get("role")
+                request.state.user_email = payload.get("email")
         return await call_next(request)
 
