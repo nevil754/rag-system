@@ -1,11 +1,12 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
-from app.api.deps import CurrentDB, CurrentTenant
+from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.schemas.common import PaginatedResponse
 from app.schemas.document import IngestionJobSchema
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
 
 @router.get("", response_model=PaginatedResponse[IngestionJobSchema])
 async def list_jobs(
@@ -36,6 +37,7 @@ async def list_jobs(
     items = [IngestionJobSchema.model_validate(dict(r._mapping)) for r in rows]
     return PaginatedResponse.build(items=items, total=total, page=page, page_size=page_size)
 
+
 @router.get("/{job_id}", response_model=IngestionJobSchema)
 async def get_job(
     job_id: str,
@@ -55,10 +57,11 @@ async def get_job(
         raise HTTPException(status_code=404, detail="Job non trovato")
     return IngestionJobSchema.model_validate(dict(job._mapping))
 
+
 @router.post("/{job_id}/cancel")
 async def cancel_job(
     job_id: str,
-    tenant: CurrentTenant,
+    tenant: AdminOnly,
     db: CurrentDB,
 ) -> dict:
     row = await db.execute(
@@ -83,4 +86,5 @@ async def cancel_job(
         {"id": job_id}
     )
     return {"message": "Job cancellato", "job_id": job_id}
+
 

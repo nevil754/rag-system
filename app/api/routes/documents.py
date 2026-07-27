@@ -22,6 +22,7 @@ async def upload_document(
     file: UploadFile = File(...),
     collection_id: str | None = Form(None),
 ) -> UploadResponse:
+    
     suffix = "." + ( file.filename or "" ).rsplit(".", 1)[-1].lower()
     if suffix not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -44,6 +45,7 @@ async def upload_document(
     except ValueError as e:
         raise HTTPException( status_code=400, detail=str(e) )
     return UploadResponse(**result)
+
 
 @router.get( "", response_model=PaginatedResponse[DocumentSchema] )
 async def list_documents(
@@ -82,6 +84,7 @@ async def list_documents(
     items = [ DocumentSchema.model_validate( dict(r._mapping) ) for r in rows ]
     return PaginatedResponse.build( items=items, total=total, page=page, page_size=page_size )
 
+
 @router.get("/{document_id}/status", response_model=IngestionJobSchema)
 async def get_document_status(
     document_id: str,
@@ -102,10 +105,11 @@ async def get_document_status(
         raise HTTPException( status_code=404, detail="Job non trovato" )
     return IngestionJobSchema.model_validate( dict(job._mapping) )
 
+
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_document(
     document_id: str,
-    tenant: CurrentTenant,
+    tenant: AdminOnly,
     db: CurrentDB,
 ) -> None:
 
@@ -139,4 +143,5 @@ async def delete_document(
         {"id": document_id}
     )
     logger.info(f"Documento cancellato: {document_id}", tenant=tenant.tenant_slug)
+
 
