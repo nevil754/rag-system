@@ -57,10 +57,11 @@ def create_app() -> FastAPI:
 
     from app.api.middleware.logging import LoggingMiddleware
     app.add_middleware(LoggingMiddleware)
-    from app.api.middleware.tenant import TenantMiddleware
-    app.add_middleware(TenantMiddleware)
     from app.api.middleware.rate_limit import RateLimitMiddleware
     app.add_middleware(RateLimitMiddleware)
+    from app.api.middleware.tenant import TenantMiddleware
+    app.add_middleware(TenantMiddleware)
+    
     from app.api.routes.health import router as health_router
     from app.api.routes.auth import router as auth_router
     app.include_router(health_router)

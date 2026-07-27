@@ -33,7 +33,7 @@ def run_ingestion_pipeline(
     parsed = parse_document(file_path)
     logger.debug( f"Parsing: {parsed.page_count} pagine, {len(parsed.text)} chars" )
     clean = clean_text(parsed.text)
-    logger.debug( f"Pulizia: { len(parsed.text) } → { len(clean) } chars" )
+    logger.debug( f"Pulizia: { len(parsed.text) } -> { len(clean) } chars" )
     base_metadata = {
         "tenant_id": tenant_id,
         "document_id": document_id,
@@ -74,11 +74,17 @@ def run_ingestion_pipeline(
                 indices=sparse_vec["indices"],
                 values=sparse_vec["values"],
             )
+        #ID deterministico (document_id + posizione chunk) invece di uuid4 casuale: una
+        #re-ingestion dello stesso documento sovrascrive gli stessi punti invece di
+        #duplicarli, rendendo l'upsert idempotente.
+        point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{document_id}:{chunk.chunk_index}"))
         points.append( qmodels.PointStruct(
-            id=str(uuid.uuid4()),
+            id=point_id,
             vector=vector_dict,
             payload=payload,
         ) )
+
+
 
     batch_size = 100
     for i in range( 0, len(points), batch_size ):
