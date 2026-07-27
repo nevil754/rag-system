@@ -48,6 +48,7 @@ async def aembed_query(text: str) -> list[float]:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, embed_query, text)
 
+
 @lru_cache(maxsize=1)
 def get_sparse_model() -> Any:
     from fastembed import SparseTextEmbedding
@@ -59,10 +60,21 @@ def embed_sparse_texts(texts: list[str]) -> list[dict]:
     vectors = list(model.embed(texts))
     return [{"indices": v.indices.tolist(), "values": v.values.tolist()} for v in vectors]
 
+
+def embed_sparse_query(text: str) -> dict:
+    return embed_sparse_texts([text])[0]
+
+async def aembed_sparse_query(text: str) -> dict:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, embed_sparse_query, text)
+
+
+
 def get_embedding_dimension() -> int:
     model = get_embedding_model()
     test_vector = list(model.embed(["test"]))[0]
     return len(test_vector)
+
 
 @lru_cache(maxsize=1)
 def get_reranker_model() -> Any:
@@ -74,9 +86,10 @@ def get_reranker_model() -> Any:
     logger.info("Caricamento reranker", model=settings.reranker_model)
     reranker = CrossEncoder(
         settings.reranker_model,
-        max_length=512,
+        max_length=512,   #ma xlenght context window
     )
 
     logger.info("Reranker caricato", model=settings.reranker_model)
     return reranker
+
 

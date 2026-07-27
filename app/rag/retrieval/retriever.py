@@ -8,6 +8,7 @@ from app.core.settings import get_settings
 
 settings = get_settings()
 
+
 @dataclass
 class RetrievedChunk:
     text: str
@@ -71,7 +72,8 @@ async def retrieve(
     sparse_results = []
     if settings.qdrant_use_sparse:
         try:
-            sparse_vector = await _abuild_sparse_vector(query)
+            from app.core.embeddings import aembed_sparse_query
+            sparse_vector = await aembed_sparse_query(query)
             sparse_results = await client.search(
                 collection_name=collection_name,
                 query_vector=qmodels.NamedSparseVector(name="sparse", vector=sparse_vector),
@@ -106,21 +108,26 @@ async def retrieve(
     logger.debug(f"Retrieval completato: {len(chunks)} chunk")
     return chunks
 
-@lru_cache(maxsize=1)
-def _get_splade_model() -> Any:
-    from fastembed import SparseTextEmbedding
-    logger.info("Caricamento modello SPLADE sparse", model="prithivida/Splade_PP_en_v1")
-    return SparseTextEmbedding(model_name="prithivida/Splade_PP_en_v1")
 
-def _build_sparse_vector(query: str) -> Any:
-    model = _get_splade_model()
-    vectors = list(model.embed([query]))
-    v = vectors[0]
-    return {"indices": v.indices.tolist(), "values": v.values.tolist()}
 
-async def _abuild_sparse_vector(query: str) -> Any:
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, _build_sparse_vector, query)
+# @lru_cache(maxsize=1)
+# def _get_splade_model() -> Any:
+#     from fastembed import SparseTextEmbedding
+#     logger.info("Caricamento modello SPLADE sparse", model="prithivida/Splade_PP_en_v1")
+#     return SparseTextEmbedding(model_name="prithivida/Splade_PP_en_v1")
+
+# def _build_sparse_vector(query: str) -> Any:
+#     model = _get_splade_model()
+#     vectors = list(model.embed([query]))
+#     v = vectors[0]
+#     return {"indices": v.indices.tolist(), "values": v.values.tolist()}
+
+# async def _abuild_sparse_vector(query: str) -> Any:
+#     loop = asyncio.get_running_loop()
+#     return await loop.run_in_executor(None, _build_sparse_vector, query)
+
+
+
 
 def _rrf_fusion(
     dense: list,
