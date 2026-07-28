@@ -77,7 +77,7 @@ class TenantRedis:
         await self._cache.setex(key,  ttl or settings.cache_query_ttl_seconds,  response)
 
     async def invalidate_query_cache(self) -> int:
-        pattern = self._key("cache", "query", "*")
+        pattern = self._key("cache", "query", "*")   #pattern e.g. tenant:abc123:cache:query:* per trovare tutte le cache query di questo tenant
         keys = await self._cache.keys(pattern)
         if keys:
             await self._cache.delete(*keys)

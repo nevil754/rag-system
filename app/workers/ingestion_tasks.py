@@ -5,6 +5,7 @@ from loguru import logger
 from sqlalchemy import text
 from app.workers.celery_app import celery_app
 
+
 @celery_app.task(
     bind=True,
     max_retries=3,
@@ -24,7 +25,7 @@ def ingest_document(
     from app.db.sqlserver import tenant_db
     from app.core.redis_client import TenantRedis
     from app.rag.ingestion.pipeline import run_ingestion_pipeline
-    task_id = self.request.id
+    task_id = self.request.id  #this came from Celery this task that is happening
     log = logger.bind(
         task_id=task_id,
         tenant=tenant_slug,
@@ -48,7 +49,6 @@ def ingest_document(
         )
     try:
         start = time.time()
-
         result = run_ingestion_pipeline(
             tenant_id=tenant_id,
             tenant_slug=tenant_slug,
@@ -134,6 +134,7 @@ def ingest_document(
             raise exc
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
+
 @celery_app.task(
     bind=True,
     max_retries=2,
@@ -168,4 +169,5 @@ def reprocess_document(
         queue="low",
     )
     return {"status": "queued", "task_id": task.id, "document_id": document_id}
+
 

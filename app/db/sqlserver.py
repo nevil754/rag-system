@@ -166,6 +166,7 @@ class TenantDB:
             return False
 
 
+
 def _slug_to_schema(slug: str) -> str:
     return "tenant_" + slug.replace("-", "_").lower()
 
@@ -205,6 +206,7 @@ def get_async_engine():
     )
     logger.info("Engine SQL Server asincrono creato")
     return engine
+
 
 tenant_db = TenantDB()
 

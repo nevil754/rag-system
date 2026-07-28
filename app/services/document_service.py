@@ -13,6 +13,7 @@ settings = get_settings()
 
 UPLOAD_DIR = Path("/app/uploads")
 
+
 class DocumentService:
 
     def __init__(self, db: AsyncSession, tenant_id: str, tenant_slug: str, user_id: str):
@@ -20,6 +21,7 @@ class DocumentService:
         self.tenant_id = tenant_id
         self.tenant_slug = tenant_slug
         self.user_id = user_id
+
 
     async def upload_and_queue(
         self,
@@ -34,7 +36,7 @@ class DocumentService:
                 f"File troppo grande: { len(file_bytes) // 1024 // 1024 }MB "
                 f"(max {settings.ingestion_max_file_mb}MB)"
             )
-        file_hash = hashlib.sha256(file_bytes).hexdigest()
+        file_hash = hashlib.sha256(file_bytes).hexdigest()   #il risultato di sha-256 è attualmente binario quindi hexdigest() lo converte in str leggibile esadecimale
         existing = await self.db.execute(
             text("SELECT id FROM documents WHERE file_hash = :hash"),
             {"hash": file_hash}
@@ -43,15 +45,15 @@ class DocumentService:
             raise ValueError(f"Documento già caricato: {original_filename}")
 
         document_id = str(uuid4())
-        suffix = Path(original_filename).suffix
+        suffix = Path(original_filename).suffix   #.suffix restituisce estensione del file (e.g.'.pdf')
         saved_filename = f"{document_id}{suffix}"
-        file_path = UPLOAD_DIR / self.tenant_slug / saved_filename
-        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path = UPLOAD_DIR / self.tenant_slug / saved_filename   #OK here setto il path where save the files!
+        file_path.parent.mkdir(parents=True, exist_ok=True)  #parents=True means se le cartelle superiori non esistono creale tutte, exist_ok=True means se la dir esiste gia non dare error
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
-        import mimetypes
-        mime_type = mimetypes.guess_type(original_filename)[0] or "application/octet-stream"
+        import mimetypes   #guess the file type watching the extension
+        mime_type = mimetypes.guess_type(original_filename)[0] or "application/octet-stream"  #e.g. mimetypes.guess_type("document.pdf")  return tupla (mime_type, encoding) quindi ("application/pdf", None), con [0] prendi solo il primo elemento. application/octet-stream è il MIME type generico per file binari sconosciuti.
 
         await self.db.execute(
             text("""
@@ -107,4 +109,5 @@ class DocumentService:
             "task_id": task.id,
             "status": "queued",
         }
+
 

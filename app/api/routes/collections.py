@@ -48,7 +48,7 @@ async def list_collections(
     page_size: int = 20,
 ) -> PaginatedResponse[CollectionSchema]:
     offset = (page - 1) * page_size
-    total = ( await db.execute( text("SELECT COUNT(*) FROM collections WHERE is_active = 1") ) ).scalar() or 0
+    total = ( await db.execute( text("SELECT COUNT(*) FROM collections WHERE is_active = 1") ) ).scalar() or 0  #scalar() prende il primo valore della prima riga 
     rows = await db.execute(
         text("""
             SELECT id, name, description, qdrant_name, is_active, created_at

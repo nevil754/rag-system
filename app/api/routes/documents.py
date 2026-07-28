@@ -25,7 +25,7 @@ async def upload_document(
     collection_id: str | None = Form(None),
 ) -> UploadResponse:
     
-    suffix = "." + ( file.filename or "" ).rsplit(".", 1)[-1].lower()
+    suffix = "." + ( file.filename or "" ).rsplit(".", 1)[-1].lower()   #splitta partedo da detra sul char '.', 1 significa fa al max solo 1 split, quindi ora ottieni e.g. "xxx.pdf" -> ["xxx", "pdf"] quindi con [1] prendi solo l'estensione.
     if suffix not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
