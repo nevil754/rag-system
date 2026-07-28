@@ -25,6 +25,9 @@ def get_llm() -> BaseChatModel:
             f"Provider LLM '{provider}' non supportato.\n Usa: ollama | openai | google "
         )
 
+
+#here extras
+
 def _build_ollama(settings: Any) -> BaseChatModel:
     try:
         from langchain_ollama import ChatOllama

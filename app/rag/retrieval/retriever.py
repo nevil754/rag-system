@@ -6,6 +6,7 @@ from typing import Any
 from loguru import logger
 from app.core.settings import get_settings
 
+
 settings = get_settings()
 
 
@@ -127,8 +128,6 @@ async def retrieve(
 #     return await loop.run_in_executor(None, _build_sparse_vector, query)
 
 
-
-
 def _rrf_fusion(
     dense: list,
     sparse: list,
@@ -154,6 +153,7 @@ def _rrf_fusion(
             }
         scores[rid]["score"] += 1.0 / (60 + rank + 1)
     return sorted( scores.values(), key=lambda x: x["score"], reverse=True )[:k]
+
 
 def _mmr_rerank(
     query_vector: list[float],
@@ -190,6 +190,7 @@ def _mmr_rerank(
 
     return selected
 
+
 def _score_similarity(a: dict, b: dict) -> float:
     pa, pb = a["payload"], b["payload"]
     if pa.get("document_id") == pb.get("document_id"):
@@ -197,6 +198,7 @@ def _score_similarity(a: dict, b: dict) -> float:
 
         return max(0, 1.0 - diff * 0.1)
     return 0.0
+
 
 def _cross_encoder_rerank(
     query: str,
@@ -214,6 +216,7 @@ def _cross_encoder_rerank(
     reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
     logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
     return reranked[:top_k]
+
 
 async def _async_cross_encoder_rerank(query: str, results: list[dict], top_k: int) -> list[dict]:
     loop = asyncio.get_running_loop()

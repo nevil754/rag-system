@@ -12,6 +12,7 @@ from app.core.embeddings import embed_texts
 from app.core.vectorstore import get_qdrant_client, get_collection_name, ensure_collection
 from app.core.settings import get_settings
 
+
 settings = get_settings()
 
 def run_ingestion_pipeline(
@@ -102,4 +103,5 @@ def run_ingestion_pipeline(
         "page_count": parsed.page_count,
         "collection_name": collection_name,
     }
+
 

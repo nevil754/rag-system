@@ -5,6 +5,7 @@ from typing import Any
 from loguru import logger
 from app.core.settings import get_settings
 
+
 settings = get_settings()
 
 class ParsedDocument:
@@ -21,6 +22,7 @@ class ParsedDocument:
         self.tables = tables
         self.metadata = metadata
         self.page_count = page_count
+
 
 def parse_document(file_path: str) -> ParsedDocument:
     path = Path(file_path)
@@ -41,6 +43,7 @@ def parse_document(file_path: str) -> ParsedDocument:
         return _parse_text(file_path)
     else:
         return _parse_with_unstructured(file_path)
+
 
 def _parse_with_docling(file_path: str) -> ParsedDocument:
     from docling.document_converter import DocumentConverter
@@ -92,6 +95,7 @@ def _parse_with_docling(file_path: str) -> ParsedDocument:
         metadata=metadata,
         page_count=len(pages),
     )
+
 
 def _parse_excel(file_path: str) -> ParsedDocument:
     import openpyxl
@@ -157,3 +161,5 @@ def _parse_with_unstructured(file_path: str) -> ParsedDocument:
         metadata={"parser": "unstructured", "page_count": len(pages)},
         page_count=len(pages),
     )
+
+

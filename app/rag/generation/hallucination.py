@@ -2,6 +2,7 @@ from __future__ import annotations
 from loguru import logger
 from app.rag.retrieval.retriever import RetrievedChunk
 
+
 async def check_faithfulness(
     question: str,
     answer: str,
@@ -33,6 +34,7 @@ async def check_faithfulness(
     except Exception as e:
         logger.warning(f"Hallucination check fallito: {e}")
         return 1.0
+
 
 def is_hallucination(score: float, threshold: float = 0.5) -> bool:
     return score < threshold

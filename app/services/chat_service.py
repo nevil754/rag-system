@@ -17,6 +17,7 @@ from app.rag.memory.context_builder import format_sources_for_response
 
 settings = get_settings()
 
+
 class ChatService:
 
     def __init__(
@@ -245,6 +246,7 @@ class ChatService:
         pipe.expire(f"{base}:tokens_out", 172800)
         pipe.expire(f"{base}:queries", 172800)
         await pipe.execute()
+
 
 def _hash_query(question: str, conv_id: str) -> str:
     normalized = question.strip().lower()

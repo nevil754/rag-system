@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.settings import get_settings
 
+
 settings = get_settings()
 
 UPLOAD_DIR = Path("/app/uploads")
@@ -21,7 +22,6 @@ class DocumentService:
         self.tenant_id = tenant_id
         self.tenant_slug = tenant_slug
         self.user_id = user_id
-
 
     async def upload_and_queue(
         self,

@@ -3,6 +3,7 @@ from typing import Any
 from loguru import logger
 from app.rag.retrieval.retriever import RetrievedChunk
 
+
 def build_rag_context(
     chunks: list[RetrievedChunk],
     session_messages: list[dict],
@@ -47,6 +48,7 @@ def build_rag_context(
         "facts": facts_text,
     }
 
+
 def format_sources_for_response( chunks: list[RetrievedChunk] ) -> list[dict]:
     return [
         {
@@ -59,4 +61,5 @@ def format_sources_for_response( chunks: list[RetrievedChunk] ) -> list[dict]:
         }
         for chunk in chunks
     ]
+
 

@@ -3,6 +3,7 @@ import time
 from loguru import logger
 from app.rag.graph.state import RAGState
 
+
 async def node_route(state: RAGState) -> dict:
     from app.rag.agents.router_agent import route_query
     route = await route_query(state["question"])
@@ -80,4 +81,5 @@ async def node_save_to_memory(state: RAGState) -> dict:
         {"role": "assistant", "content": state.get("answer", "")},
     )
     return {}
+
 

@@ -5,7 +5,9 @@ from loguru import logger
 from app.core.redis_client import TenantRedis
 from app.core.settings import get_settings
 
+
 settings = get_settings()
+
 
 @dataclass
 class ChatMessage:

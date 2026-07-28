@@ -7,12 +7,14 @@ from app.core.settings import get_settings
 
 settings = get_settings()
 
+
 @dataclass
 class Chunk:
     text: str
     chunk_index: int
     page_number: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
 
 def chunk_document(
     text: str,
@@ -52,6 +54,7 @@ def chunk_document(
         chunk_size=chunk_size,
     )
     return chunks
+
 
 def _find_page_number( chunk_text: str, pages: list[str] ) -> int | None:
     for i, page_text in enumerate(pages, 1):

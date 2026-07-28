@@ -14,6 +14,7 @@ from app.rag.graph.nodes import (
 )
 from app.rag.graph.edges import edge_route_decision
 
+
 @lru_cache(maxsize=1)
 def get_rag_graph():
     graph = StateGraph(RAGState)
@@ -47,6 +48,7 @@ def get_rag_graph():
     graph.add_edge("save_to_memory", END)
     return graph.compile()
 
+
 async def run_rag_graph(
     question: str,
     conversation_id: str,
@@ -79,4 +81,5 @@ async def run_rag_graph(
     }
     final_state = await graph.ainvoke(initial_state)
     return final_state
+
 

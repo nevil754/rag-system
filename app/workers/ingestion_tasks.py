@@ -135,6 +135,7 @@ def ingest_document(
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
 
+
 @celery_app.task(
     bind=True,
     max_retries=2,

@@ -3,6 +3,7 @@ from loguru import logger
 from sqlalchemy import text
 from app.workers.celery_app import celery_app
 
+
 @celery_app.task(
     name="app.workers.cleanup_tasks.purge_tenant",
     acks_late=True,
@@ -37,6 +38,7 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
     )
     return {"status": "purged", "tenant": tenant_slug}
 
+
 @celery_app.task(
     name="app.workers.cleanup_tasks.expire_sessions",
     acks_late=True,
@@ -66,4 +68,5 @@ def expire_sessions() -> dict:
     loop.close()
     logger.info(f"Session cleanup: {fixed} chiavi senza TTL corrette")
     return {"fixed_keys": fixed}
+
 

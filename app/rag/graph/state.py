@@ -25,3 +25,4 @@ class RAGState(TypedDict):
     hallucination_score: float | None
     error: str | None
 
+

@@ -5,6 +5,7 @@ from loguru import logger
 from sqlalchemy import text
 from app.workers.celery_app import celery_app
 
+
 celery_app.conf.beat_schedule = {
     "rollup-usage-daily": {
         "task": "app.workers.scheduled_tasks.rollup_usage",
@@ -15,6 +16,7 @@ celery_app.conf.beat_schedule = {
         "schedule": timedelta(hours=1),
     },
 }
+
 
 @celery_app.task(
     name="app.workers.scheduled_tasks.rollup_usage",
@@ -86,4 +88,5 @@ def rollup_usage() -> dict:
     loop.close()
     logger.info(f"Usage rollup completato: {saved} tenant salvati")
     return {"tenants_saved": saved}
+
 

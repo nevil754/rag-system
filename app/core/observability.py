@@ -7,10 +7,12 @@ from loguru import logger
 if TYPE_CHECKING:
     from app.core.settings import AppSettings
 
+
 def setup_all(settings: "AppSettings") -> None:
     setup_logging(settings)
     setup_langsmith(settings)
     setup_opentelemetry(settings)
+
 
 def setup_logging(settings: "AppSettings") -> None:
     logger.remove()

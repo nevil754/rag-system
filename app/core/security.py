@@ -8,9 +8,11 @@ from loguru import logger
 from passlib.context import CryptContext
 from app.core.settings import get_settings
 
+
 settings = get_settings()
 
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)   #bcrypt come algh per le password, deprecated auto "Se un utente ha ancora un hash vecchio, consideralo valido ma aggiornamelo quando fa login", bcrypt__rounds=12 indica quanto deve lavorare il computer (12 è un buon equilibrio)
+
 
 def hash_password(plain: str) -> str:
     return _pwd_context.hash(plain)
@@ -46,6 +48,7 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
     except JWTError as e:
         logger.debug(f"JWT decode fallito: {e}")
         return None
+
 
 def extract_tenant_from_token(token: str) -> tuple[str, str] | None:
     payload = decode_access_token(token)

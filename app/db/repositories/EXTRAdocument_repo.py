@@ -1,6 +1,6 @@
 from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.repositories.base import BaseRepository
+from app.db.repositories.EXTRAbase import BaseRepository
 
 class DocumentRepository(BaseRepository):
 
@@ -67,6 +67,8 @@ class DocumentRepository(BaseRepository):
         )
         return [dict(r._mapping) for r in rows], total or 0
 
+
+
 class IngestionJobRepository(BaseRepository):
 
     async def get_by_document(self, document_id: str) -> dict | None:
@@ -103,4 +105,5 @@ class IngestionJobRepository(BaseRepository):
                 "doc_id": document_id,
             }
         )
+
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from app.core.security import hash_password
-from app.db.repositories.base import BaseRepository
+from app.db.repositories.EXTRAbase import BaseRepository
+
 
 class UserRepository(BaseRepository):
     async def get_by_email(self, email: str) -> dict | None:
@@ -60,4 +61,5 @@ class UserRepository(BaseRepository):
             """
         )
         return [ dict(r._mapping) for r in rows ]
+
 

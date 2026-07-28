@@ -5,10 +5,12 @@ from typing import Any
 import yaml
 from loguru import logger
 
+
 def get_rag_system_prompt(tenant_name: str = "Compet-e Compliance AI") -> str:
     prompts = _load_prompts()
     template = prompts.get("system", {}).get("base", _DEFAULT_SYSTEM)
     return template.format( tenant_name=tenant_name )
+
 
 def get_rag_user_prompt(
     context: str,
@@ -23,9 +25,11 @@ def get_rag_user_prompt(
         question=question,
     )
 
+
 def get_no_context_message() -> str:
     prompts = _load_prompts()
     return prompts.get("rag", {}).get("no_context", _DEFAULT_NO_CONTEXT)
+
 
 @lru_cache(maxsize=1)
 def _load_prompts() -> dict:
@@ -35,6 +39,7 @@ def _load_prompts() -> dict:
         return {}
     with open(prompt_file) as f:
         return yaml.safe_load(f) or {}
+
 
 _DEFAULT_SYSTEM = """Sei un assistente legale AI per {tenant_name}.
 Rispondi sempre in italiano a meno che l'utente non scriva in un'altra lingua.

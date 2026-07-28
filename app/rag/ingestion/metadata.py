@@ -7,8 +7,10 @@ import yaml
 from loguru import logger
 from app.core.settings import get_settings
 
+
 settings = get_settings()
 _metadata_config: dict | None = None
+
 
 def build_chunk_metadata(
     tenant_id: str,
@@ -37,6 +39,7 @@ def build_chunk_metadata(
     }
     return metadata
 
+
 def _classify_document(text_sample: str, filename: str) -> str:
     cfg = get_metadata_config()
     doc_types = cfg.get("document_types", {})
@@ -50,6 +53,7 @@ def _classify_document(text_sample: str, filename: str) -> str:
             return doc_type
 
     return "generic"
+
 
 def get_metadata_config() -> dict:
     global _metadata_config

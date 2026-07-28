@@ -10,11 +10,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 CONFIG_FILE = BASE_DIR / "config" / "config.yaml"
 
+
 def _load_yaml() -> dict:
     if not CONFIG_FILE.exists():
         return {}
     with open( CONFIG_FILE, encoding="utf-8" ) as f:
         return yaml.safe_load(f) or {}
+
 
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -135,6 +137,7 @@ class AppSettings(BaseSettings):
     google_api_key: str = ""
     ollama_api_key: str = ""
 
+
     @field_validator("jwt_secret_key")
     @classmethod
     def validate_jwt_secret(cls, v: str) -> str:
@@ -152,6 +155,8 @@ class AppSettings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"log_level deve essere uno di {allowed}")
         return v
+
+
 
 def _apply_yaml_overrides() -> None:
     cfg = _load_yaml()
@@ -199,6 +204,7 @@ def _apply_yaml_overrides() -> None:
             value = _get_nested(cfg, yaml_path)
             if value is not None:
                 os.environ[env_key] = str(value)
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> AppSettings:

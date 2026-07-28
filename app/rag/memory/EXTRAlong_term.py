@@ -6,7 +6,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.settings import get_settings
 
+
 settings = get_settings()
+
 
 class LongTermMemory:
     def __init__(
@@ -174,4 +176,5 @@ class LongTermMemory:
         if not summaries:
             return ""
         return "CONVERSAZIONI PRECEDENTI:\n" + "\n---\n".join(summaries)
+
 

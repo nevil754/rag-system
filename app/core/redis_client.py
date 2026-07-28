@@ -149,3 +149,4 @@ class TenantRedis:
             logger.error(f"Redis ping fallito: {e}")
             return False
 
+

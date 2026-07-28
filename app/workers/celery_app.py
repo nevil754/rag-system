@@ -5,6 +5,7 @@ from app.core.settings import get_settings
 
 settings = get_settings()
 
+
 def create_celery_app() -> Celery:
     app = Celery(
         "rag_worker",
@@ -50,5 +51,7 @@ def create_celery_app() -> Celery:
     )
     return app
 
+
 celery_app = create_celery_app()
+
 

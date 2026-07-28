@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 from app.rag.retrieval.retriever import RetrievedChunk
 
+
 @dataclass
 class Citation:
     index: int
@@ -11,6 +12,7 @@ class Citation:
     chunk_id: str
     document_id: str
     snippet: str
+
 
 def extract_citations(
     answer: str,
@@ -53,6 +55,7 @@ def extract_citations(
 
     answer_clean = re.sub(pattern, replace_citation, answer)
     return answer_clean, citations
+
 
 def format_citations_markdown(citations: list[Citation]) -> str:
     if not citations:

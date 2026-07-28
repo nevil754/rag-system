@@ -12,6 +12,7 @@ from app.rag.generation.prompts import (
 from app.rag.retrieval.retriever import RetrievedChunk
 from app.rag.memory.context_builder import build_rag_context, format_sources_for_response
 
+
 async def arun_rag_chain(
     question: str,
     chunks: list[RetrievedChunk],
@@ -57,6 +58,7 @@ async def arun_rag_chain(
         "latency_ms": latency_ms,
     }
 
+
 async def astream_rag_chain(
     question: str,
     chunks: list[RetrievedChunk],
@@ -78,4 +80,5 @@ async def astream_rag_chain(
         token = chunk.content
         if token:
             yield token
+
 

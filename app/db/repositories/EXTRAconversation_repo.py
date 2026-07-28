@@ -1,6 +1,6 @@
 from __future__ import annotations
 import json
-from app.db.repositories.base import BaseRepository
+from app.db.repositories.EXTRAbase import BaseRepository
 
 class ConversationRepository(BaseRepository):
 
@@ -129,4 +129,5 @@ class ConversationRepository(BaseRepository):
             {"uid": user_id, "limit": limit}
         )
         return [ r.summary_text for r in rows ]
+
 

@@ -89,7 +89,6 @@ class TenantDB:
                         pass
 
 
-
     def _set_schema_sync(self, session: Session, tenant_slug: str) -> None:
         schema_name = _slug_to_schema(tenant_slug)
         result = session.execute(
@@ -118,6 +117,7 @@ class TenantDB:
             )
         user_name = _slug_to_user(tenant_slug)
         await session.execute(text(f"EXECUTE AS USER = N'{user_name}'"))
+
 
     async def provision_tenant(
         self,

@@ -5,6 +5,7 @@ from typing import Any
 
 from loguru import logger
 
+
 @dataclass
 class ValidationResult:
     is_valid: bool
@@ -43,9 +44,7 @@ def validate_answer(
             issues=["risposta vuota"],
             was_modified=True,
         )
-
     answer = answer.strip()
-
     answer_lower = answer.lower().strip(".,! \n")
     if answer_lower in _EMPTY_PATTERNS or len(answer_lower) < 3:
         logger.warning("Risposta LLM con pattern vuoto", answer=answer[:50])
@@ -55,7 +54,6 @@ def validate_answer(
             issues=["pattern risposta vuota"],
             was_modified=True,
         )
-
     if len(answer) < min_length:
         issues.append(f"risposta troppo corta ({len(answer)} char, min {min_length})")
         logger.warning("Risposta LLM troppo corta", length=len(answer))
@@ -65,14 +63,11 @@ def validate_answer(
         answer = _truncate_at_sentence(answer, max_length)
         modified = True
         logger.info(f"Risposta troncata a {max_length} caratteri")
-
     answer, artifact_issues = _remove_artifacts(answer)
     if artifact_issues:
         issues.extend(artifact_issues)
         modified = True
-
     is_valid = len(answer) >= min_length
-
     if issues:
         logger.debug("Validazione risposta", issues=issues, modified=modified)
 
@@ -82,6 +77,8 @@ def validate_answer(
         issues=issues,
         was_modified=modified,
     )
+
+
 
 def _truncate_at_sentence(text: str, max_length: int) -> str:
     if len(text) <= max_length:
@@ -94,16 +91,13 @@ def _truncate_at_sentence(text: str, max_length: int) -> str:
         truncated.rfind("! "),
         truncated.rfind("? "),
     )
-
     if last_sentence_end > max_length // 2:
-
         return text[:last_sentence_end + 1].strip()
-
     last_space = truncated.rfind(" ")
     if last_space > 0:
         return text[:last_space].strip() + "..."
-
     return truncated + "..."
+
 
 def _remove_artifacts(answer: str) -> tuple[str, list[str]]:
     import re
@@ -140,3 +134,5 @@ def _remove_artifacts(answer: str) -> tuple[str, list[str]]:
             break
 
     return answer, issues
+
+
