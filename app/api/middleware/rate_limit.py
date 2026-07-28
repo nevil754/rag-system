@@ -34,7 +34,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     headers={"Retry-After": "60"},
                 )
         except Exception:
-
             pass
         return await call_next(request)
 

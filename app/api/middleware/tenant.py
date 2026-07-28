@@ -4,12 +4,17 @@ from starlette.requests import Request
 from starlette.responses import Response
 from app.core.security import decode_access_token, extract_bearer_token
 
+
+
 class TenantMiddleware(BaseHTTPMiddleware):
+    """
+    questo middleware arricchisce solo il request.state per uso nei log e nel rate limiter
+    """
 
     PUBLIC_PATHS = {"/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"}
 
     async def dispatch(self, request: Request, call_next) -> Response:
-
+        #utilizzo request.state che è uno spazio vuoto per salvare dati custom
         request.state.tenant_id = None
         request.state.tenant_slug = None
         request.state.user_id = None
@@ -31,4 +36,5 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 request.state.user_role = payload.get("role")
                 request.state.user_email = payload.get("email")
         return await call_next(request)
+
 

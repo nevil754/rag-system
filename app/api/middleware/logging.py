@@ -17,8 +17,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         request.state.request_id = request_id
         if request.url.path in self.SKIP_PATHS:
             return await call_next(request)
-        start = time.perf_counter()
-        with logger.contextualize(
+        start = time.perf_counter()   #timer ad alta precisione
+        with logger.contextualize(    #add automatic context to all logs
             request_id=request_id,
             tenant_id=getattr(request.state, "tenant_id", None),
             user_id=getattr(request.state, "user_id", None),

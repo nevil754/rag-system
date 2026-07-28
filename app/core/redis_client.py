@@ -96,9 +96,9 @@ class TenantRedis:
         pipe = self._redis.pipeline()
         pipe.incr(key)
         pipe.expire(key, window_seconds)
-        results = await pipe.execute()
-        count = results[0]
-        return ( count <= max_requests, count )
+        results = await pipe.execute()   #results è un array cioè  [ 1 (è il risultato di incr() ), True (è il risultato di EXPIRE) ]
+        count = results[0]   #prendo solo il risultato di incr()
+        return ( count<=max_requests, count )
 
     async def set_job_status(
         self,
