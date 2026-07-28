@@ -93,9 +93,9 @@ class DocumentService:
                 str(file_path),
                 collection_id,
             ],
-            queue="default",
-            countdown=3,
-            headers={"tenant_id": self.tenant_id},
+            queue="default",   #sets x this celery task
+            countdown=3,       #sets x this celery task
+            headers={"tenant_id": self.tenant_id},    #sets x this celery task
         )
         logger.info(
             "Documento in coda",

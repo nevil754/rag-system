@@ -111,10 +111,9 @@ async def get_document_status(
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_document(
     document_id: str,
-    tenant: AdminOnly,
+    tenant: AdminOnly,   #fa il check in deps.py self.user_role == "admin" quindi true/false e seè false allora Error 403
     db: CurrentDB,
 ) -> None:
-
     row = await db.execute(
         text("SELECT id, status FROM documents WHERE id = :id"),
         {"id": document_id}
@@ -130,7 +129,7 @@ async def delete_document(
         await client.delete(
             collection_name=collection,
             points_selector=qmodels.FilterSelector(
-                filter=qmodels.Filter(
+                filter=qmodels.Filter(   #corrisponde a WHERE document_id=?
                     must=[ qmodels.FieldCondition(
                         key="document_id",
                         match=qmodels.MatchValue(value=document_id)
@@ -145,5 +144,6 @@ async def delete_document(
         {"id": document_id}
     )
     logger.info(f"Documento cancellato: {document_id}", tenant=tenant.tenant_slug)
+
 
 

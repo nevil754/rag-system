@@ -16,7 +16,7 @@ async def health() -> dict[str, Any]:
         "app": settings.app_name,
         "version": settings.app_version,
         "environment": settings.app_environment,
-        "uptime_seconds": round(time.time() - _start_time),
+        "uptime_seconds": round( time.time() - _start_time ),
     }
 
 @router.get("/ready")
@@ -58,6 +58,6 @@ async def ready() -> dict[str, Any]:
     }
     if not all_ok:
         logger.warning("Readiness check fallito", checks=checks)
-        return JSONResponse(status_code=503, content=result)
+        return JSONResponse( status_code=503, content=result )
     return result
 
