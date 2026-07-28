@@ -49,7 +49,7 @@ def ensure_collection(
     collection_name = get_collection_name(tenant_slug)
     try:
         existing = client.get_collection(collection_name)
-        if not force_recreate:
+        if not force_recreate:   #quindi se True allora runna this
             logger.debug(f"Collection già esistente: {collection_name}")
             return collection_name
         logger.warning(f"force_recreate=True — cancello collection {collection_name}")
@@ -61,33 +61,32 @@ def ensure_collection(
     vectors_config: dict[str, Any] = {
         "dense": qmodels.VectorParams(
             size=dimension,
-            distance=qmodels.Distance[settings.qdrant_distance],
-            on_disk=True,
+            distance=qmodels.Distance[settings.qdrant_distance],   #configurazione dinamica della distanza Cosine | Euclidean | dot_product, per la ricerca semantica
+            on_disk=True,   #vettori su ssd per risparmiare RAM! praticamente MUST HAVE in enterprise
         )
     }
-
     sparse_vectors_config = None
     if settings.qdrant_use_sparse:
         sparse_vectors_config = {
-            "sparse": qmodels.SparseVectorParams( index=qmodels.SparseIndexParams(on_disk=True)
+            "sparse": qmodels.SparseVectorParams( index=qmodels.SparseIndexParams(on_disk=True)  #vettori su ssd per risparmiare RAM! praticamente MUST HAVE in enterprise
             )
         }
+
     client.create_collection(
         collection_name=collection_name,
         vectors_config=vectors_config,
         sparse_vectors_config=sparse_vectors_config,
         on_disk_payload=settings.qdrant_on_disk_payload,
 
-        optimizers_config=qmodels.OptimizersConfigDiff(
-            indexing_threshold=20_000,
-            memmap_threshold=50_000,
+        optimizers_config=qmodels.OptimizersConfigDiff(   #set gli ottimizzatori interni di Qdrant, DATA LA QUANTITA DI DATAS utilizzi techniques di indexes difeerenti
+            indexing_threshold=20_000,  #quando una segment supera 20K punti crea l'indice HNSW per ricerche più veloci
+            memmap_threshold=50_000,    #quando una segment supera 50K punti sposta i dati su disco (memmap) per risparmiare ram
         ),
     )
-
-    client.create_payload_index(
+    client.create_payload_index(    #crea indexes su tenant_id per filtri veloci
         collection_name=collection_name,
         field_name="tenant_id",
-        field_schema=qmodels.PayloadSchemaType.KEYWORD,
+        field_schema=qmodels.PayloadSchemaType.KEYWORD,   #KEYWORD significa stringa esatta. e.g. se tenant_id = "abc123", puoi fare filter=tenant_id="abc123" e trova tutti i documenti di quel tenant matchato 
     )
     client.create_payload_index(
         collection_name=collection_name,

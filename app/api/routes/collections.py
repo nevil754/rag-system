@@ -39,6 +39,7 @@ async def create_collection(
     )
     return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )
 
+
 @router.get("", response_model=PaginatedResponse[CollectionSchema])
 async def list_collections(
     tenant: CurrentTenant,
@@ -60,6 +61,7 @@ async def list_collections(
     items = [CollectionSchema.model_validate(dict(r._mapping)) for r in rows]
     return PaginatedResponse.build( items=items, total=total, page=page, page_size=page_size )
 
+
 @router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_collection(
     collection_id: str,
@@ -70,4 +72,5 @@ async def delete_collection(
         text("UPDATE collections SET is_active = 0 WHERE id = :id"),
         {"id": collection_id}
     )
+
 
