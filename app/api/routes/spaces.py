@@ -34,7 +34,7 @@ class SpaceSchema(BaseModel):
 
 
 
-async def _get_owned_space(space_id: str, owner_user_id: str) -> dict:
+async def _get_owned_space( space_id: str, owner_user_id: str ) -> dict:
     async with tenant_db.async_factory() as session:
         row = await session.execute(
             text("""
@@ -46,7 +46,7 @@ async def _get_owned_space(space_id: str, owner_user_id: str) -> dict:
         )
         space = row.fetchone()
     if not space:
-        raise HTTPException(status_code=404, detail="Space non trovato")
+        raise HTTPException( status_code=404, detail="Space non trovato" )
     return dict( space._mapping )
 
 

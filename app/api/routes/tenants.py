@@ -27,6 +27,7 @@ class TenantResponse(BaseModel):
 #             detail="Accesso riservato ai superadmin",
 #         )
 
+
 @router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     body: TenantCreate,
@@ -41,6 +42,7 @@ async def create_tenant(
         admin_password=body.admin_password,
     )
     return TenantResponse(**result)
+
 
 @router.get("")
 async def list_tenants(tenant: SuperAdminOnly) -> list[dict]:
@@ -67,4 +69,5 @@ async def disable_tenant(slug: str, tenant: SuperAdminOnly) -> dict:
         )
         await session.commit()
     return { "message": f"Tenant {slug} disabilitato" }
+
 
