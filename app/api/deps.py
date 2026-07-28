@@ -71,6 +71,7 @@ async def get_current_tenant(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+
 async def _validate_api_key(api_key: str) -> TenantContext | None:
     try:
         key_hash = hash_api_key(api_key)
@@ -110,6 +111,7 @@ async def _validate_api_key(api_key: str) -> TenantContext | None:
         logger.error(f"Errore validazione API key: {e}")
         return None
 
+
 async def get_db(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
 ) -> AsyncGenerator[AsyncSession, None]:
@@ -124,7 +126,7 @@ def get_tenant_redis(
 async def require_admin(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
 ) -> TenantContext:
-    if not tenant.is_admin:
+    if not tenant.is_admin:   #check self.user_role == "admin" quindi true/false
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Accesso riservato agli amministratori",

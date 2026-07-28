@@ -9,10 +9,12 @@ from app.schemas.common import PaginatedResponse
 from app.schemas.document import DocumentSchema, IngestionJobSchema, UploadResponse
 from app.services.document_service import DocumentService
 
+
 router = APIRouter(prefix="/documents", tags=["documents"])
 settings = get_settings()
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"}
+
 
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_document(

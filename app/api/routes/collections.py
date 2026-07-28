@@ -65,7 +65,7 @@ async def list_collections(
 @router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def delete_collection(
     collection_id: str,
-    tenant: AdminOnly,
+    tenant: AdminOnly,   #fa il check in deps.py self.user_role == "admin" quindi true/false e se è false allora Error 403
     db: CurrentDB,
 ) -> None:
     await db.execute(
