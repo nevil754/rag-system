@@ -4,6 +4,7 @@ from app.core.security import hash_password
 from app.core.vectorstore import ensure_collection
 from app.db.sqlserver import tenant_db
 
+
 async def provision_tenant(
     slug: str,
     display_name: str,
@@ -14,8 +15,10 @@ async def provision_tenant(
     owner_email: str | None = None,
     owner_password_hash: str | None = None,
 ) -> dict:
+    
     logger.info(f"Provisioning tenant: {slug}")
     await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan, owner_user_id=owner_user_id, )
+    
     async with tenant_db.async_factory() as session:
         from sqlalchemy import text
         row = await session.execute(
@@ -48,8 +51,6 @@ async def provision_tenant(
                 }
             )
         logger.info(f"Admin creato per tenant {slug}: {admin_email}")
-
-
     elif owner_user_id and owner_email and owner_password_hash:
         #Lo Space è creato dal proprio owner (platform user): riusiamo lo stesso id e lo
         # stesso hash password già presenti in shared.platform_users, nessun re-hash, così

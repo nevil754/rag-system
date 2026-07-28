@@ -134,7 +134,6 @@ async def require_admin(
     return tenant
 
 
-
 async def require_superadmin(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
 ) -> TenantContext:

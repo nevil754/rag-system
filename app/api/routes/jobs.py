@@ -35,7 +35,7 @@ async def list_jobs(
         params
     )
     items = [IngestionJobSchema.model_validate(dict(r._mapping)) for r in rows]
-    return PaginatedResponse.build(items=items, total=total, page=page, page_size=page_size)
+    return PaginatedResponse.build( items=items, total=total, page=page, page_size=page_size )
 
 
 @router.get("/{job_id}", response_model=IngestionJobSchema)
@@ -55,7 +55,7 @@ async def get_job(
     job = row.fetchone()
     if not job:
         raise HTTPException(status_code=404, detail="Job non trovato")
-    return IngestionJobSchema.model_validate(dict(job._mapping))
+    return IngestionJobSchema.model_validate( dict(job._mapping) )
 
 
 @router.post("/{job_id}/cancel")
@@ -80,7 +80,7 @@ async def cancel_job(
     )
     task_row_data = task_row.fetchone()
     if task_row_data and task_row_data.celery_task_id:
-        celery_app.control.revoke(task_row_data.celery_task_id, terminate=True)
+        celery_app.control.revoke( task_row_data.celery_task_id, terminate=True )   #revocate target task di Celery (ignora il processo target / ferma il processo target se è in esecuzione), control.revoke() è gia build-in
     await db.execute(
         text("UPDATE ingestion_jobs SET status = 'cancelled' WHERE id = :id"),
         {"id": job_id}
