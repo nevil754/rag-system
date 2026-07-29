@@ -147,10 +147,10 @@ IF NOT EXISTS (
     REFERENCES shared.platform_users(id);
 GO
 
-IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform.local')
+IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform.competesrl.it')
     INSERT INTO shared.platform_users (email, full_name, password_hash, is_superadmin)
     VALUES (
-        'admin@platform.local',
+        'admin@platform.competesrl.it',
         'Platform Admin',
         '$2b$12$SBT65yjDI0Z4fniKLfaYKe/W3I.dU1UiELRk01anItj6s9hxlWlBe',
         1
@@ -159,7 +159,7 @@ GO
 
 UPDATE shared.platform_users
 SET is_superadmin = 1
-WHERE email = 'admin@platform.local' AND is_superadmin = 0;
+WHERE email = 'admin@platform.competesrl.it' AND is_superadmin = 0;
 GO
 
 

@@ -39,7 +39,7 @@ DEMO_DOCUMENTS = [
     },
 ]
 
-DEFAULT_PLATFORM_ADMIN_EMAIL = "admin@platform.local"
+DEFAULT_PLATFORM_ADMIN_EMAIL = "admin@platform.competesrl.it"
 
 
 async def main():
