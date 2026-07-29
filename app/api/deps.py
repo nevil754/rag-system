@@ -134,16 +134,6 @@ async def require_admin(
     return tenant
 
 
-async def require_superadmin(
-    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
-) -> TenantContext:
-    if tenant.user_role != "superadmin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accesso riservato ai superadmin",
-        )
-    return tenant
-
 class PlatformContext:
     def __init__(self, platform_user_id: str, email: str):
         self.platform_user_id = platform_user_id
@@ -165,6 +155,37 @@ async def get_current_platform_user(
         detail="Token platform non valido o scaduto",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+# async def require_superadmin(
+#     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+# ) -> TenantContext:
+#     if tenant.user_role != "superadmin":
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Accesso riservato ai superadmin",
+#         )
+#     return tenant
+
+
+async def require_superadmin(
+    platform_user: Annotated[PlatformContext, Depends(get_current_platform_user)],
+) -> PlatformContext:
+    from sqlalchemy import text
+    async with tenant_db.async_factory() as session:
+        row = await session.execute(
+            text("SELECT is_superadmin FROM shared.platform_users WHERE id = :id"),
+            {"id": platform_user.platform_user_id},
+        )
+        result = row.fetchone()
+    if not result or not result.is_superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accesso riservato ai superadmin",
+        )
+    return platform_user
+
+
 
 
 

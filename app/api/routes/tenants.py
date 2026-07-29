@@ -5,7 +5,9 @@ from sqlalchemy import text
 from app.api.deps import SuperAdminOnly
 from app.services.tenant_service import provision_tenant
 
+
 router = APIRouter(prefix="/tenants", tags=["tenants"])
+
 
 class TenantCreate(BaseModel):
     slug: str
@@ -45,7 +47,7 @@ async def create_tenant(
 
 
 @router.get("")
-async def list_tenants(tenant: SuperAdminOnly) -> list[dict]:
+async def list_tenants(platform_user: SuperAdminOnly) -> list[dict]:
     #_require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
     async with tenant_db.async_factory() as session:
@@ -58,8 +60,9 @@ async def list_tenants(tenant: SuperAdminOnly) -> list[dict]:
         )
         return [ dict(r._mapping) for r in rows ]
 
+
 @router.patch("/{slug}/disable")
-async def disable_tenant(slug: str, tenant: SuperAdminOnly) -> dict:
+async def disable_tenant(slug: str, platform_user: SuperAdminOnly) -> dict:
     #_require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
     async with tenant_db.async_factory() as session:
