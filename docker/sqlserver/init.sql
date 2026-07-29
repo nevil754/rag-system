@@ -153,7 +153,7 @@ IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform
         'admin@platform.local',
         'Platform Admin',
         '$2b$12$SBT65yjDI0Z4fniKLfaYKe/W3I.dU1UiELRk01anItj6s9hxlWlBe',
-        1,
+        1
     );
 GO
 
