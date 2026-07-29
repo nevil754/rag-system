@@ -17,7 +17,7 @@ async def provision_tenant(
 ) -> dict:
     
     logger.info(f"Provisioning tenant: {slug}")
-    await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan, owner_user_id=owner_user_id, )
+    await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan, owner_user_id=owner_user_id, )  #execute function of tenant_db that came from sqlserver.py
     
     async with tenant_db.async_factory() as session:
         from sqlalchemy import text

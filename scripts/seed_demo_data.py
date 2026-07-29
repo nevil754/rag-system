@@ -93,7 +93,7 @@ async def main():
     import os
     from app.rag.ingestion.pipeline import run_ingestion_pipeline
 
-    async with tenant_db._async_factory() as session:
+    async with tenant_db.async_factory() as session:
         row = await session.execute(
             text("SELECT id FROM shared.tenants WHERE slug = :slug"),
             {"slug": DEMO_TENANT_SLUG}

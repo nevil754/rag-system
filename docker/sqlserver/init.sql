@@ -127,9 +127,16 @@ GO
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('shared.platform_users') AND name = 'is_superadmin'
+)
+    ALTER TABLE shared.platform_users ADD is_superadmin BIT NOT NULL DEFAULT 0;   --here add new col is_superadmin !
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
     WHERE object_id = OBJECT_ID('shared.tenants') AND name = 'owner_user_id'
 )
-    ALTER TABLE shared.tenants ADD owner_user_id UNIQUEIDENTIFIER NULL;
+    ALTER TABLE shared.tenants ADD owner_user_id UNIQUEIDENTIFIER NULL;   --here add new col owner_user_id !
 GO
 
 IF NOT EXISTS (
@@ -141,7 +148,7 @@ IF NOT EXISTS (
 GO
 
 IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform.local')
-    INSERT INTO shared.platform_users (email, full_name, password_hash)
+    INSERT INTO shared.platform_users (email, full_name, password_hash, is_superadmin)
     VALUES (
         'admin@platform.local',
         'Platform Admin',
@@ -149,6 +156,10 @@ IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform
     );
 GO
 
+UPDATE shared.platform_users
+SET is_superadmin = 1
+WHERE email = 'admin@platform.local' AND is_superadmin = 0;
+GO
 
 
 
@@ -412,4 +423,6 @@ GO
 
 PRINT 'init.sql completato.';
 GO
+
+
 
