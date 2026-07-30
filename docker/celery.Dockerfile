@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 RUN python - <<'PY'
 from fastembed import TextEmbedding
 from fastembed import SparseTextEmbedding
-from fastembed import TextCrossEncoder
+from fastembed.rerank.cross_encoder import TextCrossEncoder
 TextEmbedding("BAAI/bge-m3")
 SparseTextEmbedding("prithivida/Splade_PP_en_v1")
 TextCrossEncoder("BAAI/bge-reranker-base")
