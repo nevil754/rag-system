@@ -16,11 +16,13 @@ services:
       APP_ENVIRONMENT: "development"
       APP_DEBUG: "true"
       LOG_LEVEL: "DEBUG"
+      HF_HOME: "/cache/huggingface"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
       - ./main.py:/app/main.py
       - ${DATA_ROOT}/uploads:/app/uploads
+      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
     ports:
       - "8000:8000"
       - "5678:5678"
@@ -37,10 +39,12 @@ services:
     environment:
       APP_ENVIRONMENT: "development"
       LOG_LEVEL: "DEBUG"
+      HF_HOME: "/cache/huggingface"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
       - ${DATA_ROOT}/uploads:/app/uploads
+      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
  
 
   celery-worker-default:
@@ -54,10 +58,12 @@ services:
     environment:
       APP_ENVIRONMENT: "development"
       LOG_LEVEL: "DEBUG"
+      HF_HOME: "/cache/huggingface"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
       - ${DATA_ROOT}/uploads:/app/uploads
+      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
 
 
   celery-beat:

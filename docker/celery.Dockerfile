@@ -25,11 +25,11 @@ RUN pip install --no-cache-dir --upgrade pip \
 #     || echo "fastembed model preload skipped (no internet in build)"
 #carica models in fase di build, 
 #ora uso intfloat/multilingual-e5-large invece di BAAI/bge-m3, in futuro check version of lib 'fastembed' che supporta BAAI/bge-m3!!
-RUN python - <<'PY' || echo "Model preload skipped"
+RUN python - <<'PY'
 from fastembed import TextEmbedding
 from fastembed import SparseTextEmbedding
 from fastembed import TextCrossEncoder
-TextEmbedding("intfloat/multilingual-e5-large")
+TextEmbedding("BAAI/bge-m3")
 SparseTextEmbedding("prithivida/Splade_PP_en_v1")
 TextCrossEncoder("BAAI/bge-reranker-base")
 print("All AI models downloaded.")
@@ -48,7 +48,7 @@ COPY --from=builder /opt/microsoft /opt/microsoft
 COPY --from=builder /etc/odbcinst.ini /etc/odbcinst.ini
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=builder /usr/local/bin /usr/local/bin
-COPY --from=builder /root/.cache /root/.cache
+#COPY --from=builder /root/.cache /root/.cache  non piu necessatio ora ho il volume apposta x i models scaricati da huggingface
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

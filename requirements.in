@@ -15,7 +15,7 @@ pydantic-settings==2.6.1  #x gestione configurazione, carica da .env, variabili 
 python-dotenv==1.0.1   #x caricare .env
 pyyaml==6.0.2  #parsing file .yaml
 qdrant-client==1.12.1    #🔥x qdrant(db vector)
-fastembed==0.4.1   #🔥lo usi e wrappi model from huggingface BAAI/bge-m3. better better di OllamaEmbeddings( here model ollama x embedding)
+fastembed==0.8.0   #🔥lo usi e wrappi model from huggingface BAAI/bge-m3. better better di OllamaEmbeddings( here model ollama x embedding)
 sentence-transformers==3.3.1   #x modelli re-ranking & semantic similarity tecnhique. il vecchio 'transformers' oggi è sostituito da questo o BETTER da 'fastembed'
 rank-bm25==0.2.2    #keyword search classico
 
