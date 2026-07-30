@@ -197,6 +197,7 @@ BEGIN
         CONSTRAINT [UQ_' + @schema_name + '_users_email] UNIQUE (email),
         CONSTRAINT [CK_' + @schema_name + '_users_role] CHECK (role IN (''admin'',''user'',''viewer''))
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -216,6 +217,7 @@ BEGIN
         CONSTRAINT [PK_' + @schema_name + '_collections] PRIMARY KEY (id),
         CONSTRAINT [UQ_' + @schema_name + '_qdrant_name] UNIQUE (qdrant_name)
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -245,12 +247,14 @@ BEGIN
             status IN (''pending'',''processing'',''ready'',''error'',''deleted'')
         )
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = ''IX_' + @schema_name + '_doc_hash'')
         CREATE INDEX [IX_' + @schema_name + '_doc_hash]
         ON [' + @schema_name + '].documents (file_hash)';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -274,6 +278,7 @@ BEGIN
             status IN (''queued'',''running'',''done'',''failed'',''cancelled'')
         )
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -293,6 +298,7 @@ BEGIN
         updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_convs] PRIMARY KEY (id)
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -315,12 +321,14 @@ BEGIN
         CONSTRAINT [PK_' + @schema_name + '_msgs] PRIMARY KEY (id),
         CONSTRAINT [CK_' + @schema_name + '_msg_role] CHECK (role IN (''user'',''assistant'',''system''))
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = ''IX_' + @schema_name + '_msgs_conv'')
         CREATE INDEX [IX_' + @schema_name + '_msgs_conv]
         ON [' + @schema_name + '].messages (conversation_id, created_at)';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -337,6 +345,7 @@ BEGIN
         created_at  DATETIME2(3)            NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_feedback] PRIMARY KEY (id)
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -355,6 +364,7 @@ BEGIN
         created_at      DATETIME2(3)            NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_conv_summ] PRIMARY KEY (id)
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
@@ -375,21 +385,25 @@ BEGIN
         updated_at      DATETIME2(3)            NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_user_facts] PRIMARY KEY (id)
     )';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = ''IX_' + @schema_name + '_user_facts_user'')
         CREATE INDEX [IX_' + @schema_name + '_user_facts_user]
         ON [' + @schema_name + '].user_facts (user_id, is_active, confidence DESC)';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = '
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = ''usr_' + @schema_name + ''')
         CREATE USER [usr_' + @schema_name + '] WITHOUT LOGIN
         WITH DEFAULT_SCHEMA = [' + @schema_name + ']';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     SET @sql = 'GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::[' + @schema_name + '] TO [usr_' + @schema_name + ']';
+    PRINT @sql;
     EXEC sp_executesql @sql;
 
     PRINT 'Tenant provisioned: ' + @schema_name;
