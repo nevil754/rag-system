@@ -29,7 +29,7 @@ RUN python - <<'PY'
 from fastembed import TextEmbedding
 from fastembed import SparseTextEmbedding
 from fastembed.rerank.cross_encoder import TextCrossEncoder
-TextEmbedding("BAAI/bge-m3")
+TextEmbedding("intfloat/multilingual-e5-large")
 SparseTextEmbedding("prithivida/Splade_PP_en_v1")
 TextCrossEncoder("BAAI/bge-reranker-base")
 print("All AI models downloaded.")
