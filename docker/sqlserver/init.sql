@@ -243,9 +243,7 @@ BEGIN
         created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_documents] PRIMARY KEY (id),
-        CONSTRAINT [CK_' + @schema_name + '_doc_status] CHECK (
-            status IN (''pending'',''processing'',''ready'',''error'',''deleted'')
-        )
+        CONSTRAINT [CK_' + @schema_name + '_doc_status] CHECK ( status IN (''pending'',''processing'',''ready'',''error'',''deleted''))
     )';
     PRINT @sql;
     EXEC sp_executesql @sql;
@@ -274,9 +272,7 @@ BEGIN
         finished_at     DATETIME2(3)           NULL,
         created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_jobs] PRIMARY KEY (id),
-        CONSTRAINT [CK_' + @schema_name + '_job_status] CHECK (
-            status IN (''queued'',''running'',''done'',''failed'',''cancelled'')
-        )
+        CONSTRAINT [CK_' + @schema_name + '_job_status] CHECK ( status IN (''queued'',''running'',''done'',''failed'',''cancelled''))
     )';
     PRINT @sql;
     EXEC sp_executesql @sql;
