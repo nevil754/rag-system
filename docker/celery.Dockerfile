@@ -21,7 +21,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir --no-deps -r requirements.txt
 
-# RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/BGE-M3')" \
+# RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-m3')" \
 #     || echo "fastembed model preload skipped (no internet in build)"
 RUN python - <<'PY' || echo "Model preload skipped"
 from fastembed import TextEmbedding

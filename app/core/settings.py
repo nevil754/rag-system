@@ -44,7 +44,7 @@ class AppSettings(BaseSettings):
     llm_streaming: bool = True
 
     embeddings_provider: str = "fastembed"
-    embeddings_model: str = "BAAI/BGE-M3"
+    embeddings_model: str = "BAAI/bge-m3"
     embeddings_base_url: str = ""
     embeddings_batch_size: int = 64
     embeddings_cache_dir: str = "/app/.cache/embeddings"
