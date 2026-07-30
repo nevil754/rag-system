@@ -23,11 +23,13 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-m3')" \
 #     || echo "fastembed model preload skipped (no internet in build)"
+#carica models in fase di build, 
+#ora uso intfloat/multilingual-e5-large invece di BAAI/bge-m3, in futuro check version of lib 'fastembed' che supporta BAAI/bge-m3!!
 RUN python - <<'PY' || echo "Model preload skipped"
 from fastembed import TextEmbedding
 from fastembed import SparseTextEmbedding
 from fastembed import TextCrossEncoder
-TextEmbedding("BAAI/bge-m3")
+TextEmbedding("intfloat/multilingual-e5-large")
 SparseTextEmbedding("prithivida/Splade_PP_en_v1")
 TextCrossEncoder("BAAI/bge-reranker-base")
 print("All AI models downloaded.")
