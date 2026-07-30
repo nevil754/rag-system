@@ -33,7 +33,7 @@ class TenantResponse(BaseModel):
 @router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     body: TenantCreate,
-    tenant: SuperAdminOnly,
+    platform_user: SuperAdminOnly,
 ) -> TenantResponse:
     #_require_superadmin(tenant)
     result = await provision_tenant(
@@ -53,7 +53,7 @@ async def list_tenants(platform_user: SuperAdminOnly) -> list[dict]:
     async with tenant_db.async_factory() as session:
         rows = await session.execute(
             text("""
-                SELECT id, slug, display_name, plan, is_active, created_at
+                SELECT id, slug, display_name, [plan], is_active, created_at
                 FROM shared.tenants
                 ORDER BY created_at DESC
             """)

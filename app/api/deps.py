@@ -1,11 +1,24 @@
 from __future__ import annotations
 from typing import Annotated, AsyncGenerator
 from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.redis_client import TenantRedis
-from app.core.security import decode_access_token, extract_bearer_token, hash_api_key
+from app.core.security import decode_access_token, extract_bearer_token, hash_api_key   #extract_bearer_token non server piu xk uso fastapi (better) x split the string in header 'Bearer'+the token
 from app.db.sqlserver import tenant_db
+
+
+bearer_scheme = HTTPBearer(
+    auto_error=False,
+    description="Incolla solo il token (senza il prefisso 'Bearer '): JWT tenant per le route "
+    "tenant-scoped, JWT platform per /spaces e /tenants.",
+)
+api_key_scheme = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+    description="API Key formato rag_xxx — alternativa al Bearer, solo per il livello tenant.",
+)
 
 
 class TenantContext:
@@ -34,8 +47,9 @@ class TenantContext:
 
 async def get_current_tenant(
     request: Request,
-    authorization: Annotated[str | None, Header()] = None,
-    x_api_key: Annotated[str | None, Header(alias="X-API-Key")] = None,
+    #authorization: Annotated[str | None, Header()] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
+    x_api_key: Annotated[str | None, Depends(api_key_scheme)] = None,
 ) -> TenantContext:
 
     state_tenant_id = getattr(request.state, "tenant_id", None)
@@ -49,18 +63,30 @@ async def get_current_tenant(
             user_email=getattr(request.state, "user_email", None) or "",
         )
     
-    if authorization:
-        token = extract_bearer_token(authorization)
-        if token:
-            payload = decode_access_token(token)
-            if payload and not payload.get("is_platform"):
-                return TenantContext(
-                    tenant_id=payload.get("tenant_id", ""),
-                    tenant_slug=payload.get("tenant_slug", ""),
-                    user_id=payload.get("sub", ""),
-                    user_role=payload.get("role", "user"),
-                    user_email=payload.get("email", ""),
-                )
+    # if authorization:
+    #     token = extract_bearer_token(authorization)
+    #     if token:
+    #         payload = decode_access_token(token)
+    #         if payload and not payload.get("is_platform"):
+    #             return TenantContext(
+    #                 tenant_id=payload.get("tenant_id", ""),
+    #                 tenant_slug=payload.get("tenant_slug", ""),
+    #                 user_id=payload.get("sub", ""),
+    #                 user_role=payload.get("role", "user"),
+    #                 user_email=payload.get("email", ""),
+    #             )
+
+    if credentials:
+        payload = decode_access_token(credentials.credentials)
+        if payload and not payload.get("is_platform"):
+            return TenantContext(
+                tenant_id=payload.get("tenant_id", ""),
+                tenant_slug=payload.get("tenant_slug", ""),
+                user_id=payload.get("sub", ""),
+                user_role=payload.get("role", "user"),
+                user_email=payload.get("email", ""),
+            )
+
     if x_api_key:
         context = await _validate_api_key(x_api_key)
         if context:
@@ -139,12 +165,21 @@ class PlatformContext:
         self.platform_user_id = platform_user_id
         self.email = email
 
+
 async def get_current_platform_user(
-    authorization: Annotated[str | None, Header()] = None,
+    #authorization: Annotated[str | None, Header()] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
 ) -> PlatformContext:
-    token = extract_bearer_token(authorization)
-    if token:
-        payload = decode_access_token(token)
+    #token = extract_bearer_token(authorization)
+    # if token:
+    #     payload = decode_access_token(token)
+    #     if payload and payload.get("is_platform"):
+    #         return PlatformContext(
+    #             platform_user_id=payload.get("sub", ""),
+    #             email=payload.get("email", ""),
+    #         )
+    if credentials:
+        payload = decode_access_token(credentials.credentials)
         if payload and payload.get("is_platform"):
             return PlatformContext(
                 platform_user_id=payload.get("sub", ""),
@@ -188,7 +223,6 @@ async def require_superadmin(
 
 
 
-
 CurrentTenant = Annotated[TenantContext, Depends(get_current_tenant)]
 
 CurrentDB = Annotated[AsyncSession, Depends(get_db)]
@@ -197,9 +231,8 @@ CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
 
 AdminOnly = Annotated[TenantContext, Depends(require_admin)]
 
-SuperAdminOnly = Annotated[TenantContext, Depends(require_superadmin)]
+SuperAdminOnly = Annotated[PlatformContext, Depends(require_superadmin)]
 
 CurrentPlatformUser = Annotated[PlatformContext, Depends(get_current_platform_user)]
-
 
 

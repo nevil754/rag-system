@@ -15,6 +15,28 @@ IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'shared')
     EXEC('CREATE SCHEMA shared');
 GO
 
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    JOIN sys.schemas s ON t.schema_id = s.schema_id
+    WHERE s.name = 'shared' AND t.name = 'platform_users'
+)
+CREATE TABLE shared.platform_users (
+    id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
+    email           NVARCHAR(255)       NOT NULL,
+    full_name       NVARCHAR(255)       NULL,
+    password_hash   NVARCHAR(255)       NOT NULL,
+    is_superadmin   BIT                 NOT NULL DEFAULT 0,
+    is_active       BIT                 NOT NULL DEFAULT 1,
+    created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
+    updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_platform_users PRIMARY KEY (id),
+    CONSTRAINT UQ_platform_users_email UNIQUE (email)
+);
+GO
+
+
+
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -30,13 +52,18 @@ CREATE TABLE shared.tenants (
     max_users       INT                 NOT NULL DEFAULT 10,
     max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,
     settings        NVARCHAR(MAX)       NULL,
+    owner_user_id   UNIQUEIDENTIFIER    NULL,
     created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
     updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_tenants PRIMARY KEY (id),
     CONSTRAINT UQ_tenants_slug UNIQUE (slug),
     CONSTRAINT CK_tenants_plan CHECK ([plan] IN ('starter','pro','enterprise'))
+    CONSTRAINT FK_tenants_owner FOREIGN KEY (owner_user_id) REFERENCES shared.platform_users(id)
 );
 GO
+
+
+
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
@@ -106,62 +133,15 @@ GO
 
 
 
-IF NOT EXISTS (
-    SELECT 1 FROM sys.tables t
-    JOIN sys.schemas s ON t.schema_id = s.schema_id
-    WHERE s.name = 'shared' AND t.name = 'platform_users'
-)
-CREATE TABLE shared.platform_users (
-    id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
-    email           NVARCHAR(255)       NOT NULL,
-    full_name       NVARCHAR(255)       NULL,
-    password_hash   NVARCHAR(255)       NOT NULL,
-    is_active       BIT                 NOT NULL DEFAULT 1,
-    created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
-    updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT PK_platform_users PRIMARY KEY (id),
-    CONSTRAINT UQ_platform_users_email UNIQUE (email)
-);
-GO
-
-
-IF NOT EXISTS (
-    SELECT 1 FROM sys.columns
-    WHERE object_id = OBJECT_ID('shared.platform_users') AND name = 'is_superadmin'
-)
-    ALTER TABLE shared.platform_users ADD is_superadmin BIT NOT NULL DEFAULT 0;   --here add new col is_superadmin !
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM sys.columns
-    WHERE object_id = OBJECT_ID('shared.tenants') AND name = 'owner_user_id'
-)
-    ALTER TABLE shared.tenants ADD owner_user_id UNIQUEIDENTIFIER NULL;   --here add new col owner_user_id !
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_tenants_owner'
-)
-    ALTER TABLE shared.tenants
-    ADD CONSTRAINT FK_tenants_owner FOREIGN KEY (owner_user_id)
-    REFERENCES shared.platform_users(id);
-GO
-
 IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform.competesrl.it')
     INSERT INTO shared.platform_users (email, full_name, password_hash, is_superadmin)
     VALUES (
         'admin@platform.competesrl.it',
         'Platform Admin',
         '$2b$12$SBT65yjDI0Z4fniKLfaYKe/W3I.dU1UiELRk01anItj6s9hxlWlBe',
-        0
+        1
     );
 GO
-
-UPDATE shared.platform_users
-SET is_superadmin = 1
-WHERE email = 'admin@platform.competesrl.it' AND is_superadmin = 0;
-GO
-
 
 
 

@@ -22,16 +22,17 @@ for i in 1 2 3; do
     sleep 10
 done
 echo "ATTENZIONE: init.sql non completato dopo 3 tentativi"
+exit 1
 
 
-echo "SQL Server pronto. Eseguo init.sql..."
-/opt/mssql-tools18/bin/sqlcmd \
-    -S localhost \
-    -U SA \
-    -P "$SA_PASSWORD" \
-    -C \
-    -i /docker-entrypoint-initdb.d/init.sql \
-    -b
+# echo "SQL Server pronto. Eseguo init.sql..."
+# /opt/mssql-tools18/bin/sqlcmd \
+#     -S localhost \
+#     -U SA \
+#     -P "$SA_PASSWORD" \
+#     -C \
+#     -i /docker-entrypoint-initdb.d/init.sql \
+#     -b
 
-echo "init.sql completato."
+# echo "init.sql completato."
 
