@@ -57,7 +57,7 @@ CREATE TABLE shared.tenants (
     updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_tenants PRIMARY KEY (id),
     CONSTRAINT UQ_tenants_slug UNIQUE (slug),
-    CONSTRAINT CK_tenants_plan CHECK ([plan] IN ('starter','pro','enterprise'))
+    CONSTRAINT CK_tenants_plan CHECK ([plan] IN ('starter','pro','enterprise')),
     CONSTRAINT FK_tenants_owner FOREIGN KEY (owner_user_id) REFERENCES shared.platform_users(id)
 );
 GO
