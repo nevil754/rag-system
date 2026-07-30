@@ -135,7 +135,7 @@ class TenantDB:
                             @slug = :slug,
                             @display_name = :display_name,
                             @plan = :plan,
-                            @owner_user_id = CAST(:owner_user_id AS UNIQUEIDENTIFIER)
+                            @owner_user_id = :owner_user_id
                     """),
                     {
                         "slug": slug, 
