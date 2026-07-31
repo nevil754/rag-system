@@ -19,7 +19,8 @@ services:
       SQLSERVER_DB: "RAGChat"
       QDRANT_URL: "http://qdrant:6333"
       BASE_URL_OLLAMA: "http://srvai2k22:11434/"   #"http://ollama:11434"
-      HF_HOME: "/cache/huggingface"
+      #HF_HOME: "/cache/huggingface"
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"   #fastembed ONLY WITH THIS KEY decide dove settare la sua cache (nel mio caso lo metto in un volume che persiste)
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -30,7 +31,7 @@ services:
     volumes:
       - ./config:/app/config:ro
       - ${DATA_ROOT}/uploads:/app/uploads  #uploads_data:/app/uploads, 
-      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
+      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -60,10 +61,11 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
-      HF_HOME: "/cache/huggingface"
+      #HF_HOME: "/cache/huggingface"
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ${DATA_ROOT}/uploads:/app/uploads  #corretto deve sharing stesso volume anche con fastapi e celery-worker-default   #uploads_data:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
+      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -97,10 +99,11 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
-      HF_HOME: "/cache/huggingface"
+      #HF_HOME: "/cache/huggingface"
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ${DATA_ROOT}/uploads:/app/uploads   #uploads_data:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
+      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
     depends_on:
       sqlserver:
         condition: service_healthy

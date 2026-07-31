@@ -16,13 +16,14 @@ services:
       APP_ENVIRONMENT: "development"
       APP_DEBUG: "true"
       LOG_LEVEL: "DEBUG"
-      HF_HOME: "/cache/huggingface"
+      #HF_HOME: "/cache/huggingface"
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
       - ./main.py:/app/main.py
       - ${DATA_ROOT}/uploads:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
+      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
     ports:
       - "8000:8000"
       - "5678:5678"
@@ -39,12 +40,13 @@ services:
     environment:
       APP_ENVIRONMENT: "development"
       LOG_LEVEL: "DEBUG"
-      HF_HOME: "/cache/huggingface"
+      #HF_HOME: "/cache/huggingface"
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
       - ${DATA_ROOT}/uploads:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
+      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
  
 
   celery-worker-default:
@@ -58,12 +60,13 @@ services:
     environment:
       APP_ENVIRONMENT: "development"
       LOG_LEVEL: "DEBUG"
-      HF_HOME: "/cache/huggingface"
+      #HF_HOME: "/cache/huggingface"
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
       - ${DATA_ROOT}/uploads:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/huggingface
+      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
 
 
   celery-beat:

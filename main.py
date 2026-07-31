@@ -40,9 +40,9 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=settings.app_version,
         description=settings.app_description,
-        docs_url="/docs" if settings.app_debug else None,
-        redoc_url="/redoc" if settings.app_debug else None,
-        openapi_url="/openapi.json" if settings.app_debug else None,
+        docs_url="/docs" if settings.app_debug else None,              #x SwaggerUI
+        redoc_url="/redoc" if settings.app_debug else None,            #x SwaggerUI
+        openapi_url="/openapi.json" if settings.app_debug else None,   #x SwaggerUI
 
         lifespan=lifespan,
     )
