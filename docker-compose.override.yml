@@ -18,6 +18,7 @@ services:
       LOG_LEVEL: "DEBUG"
       #HF_HOME: "/cache/huggingface"
       FASTEMBED_CACHE_PATH: "/cache/fastembed"
+      HOME: "/cache/fastembed"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
@@ -42,6 +43,7 @@ services:
       LOG_LEVEL: "DEBUG"
       #HF_HOME: "/cache/huggingface"
       FASTEMBED_CACHE_PATH: "/cache/fastembed"
+      HOME: "/cache/fastembed"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
@@ -62,6 +64,7 @@ services:
       LOG_LEVEL: "DEBUG"
       #HF_HOME: "/cache/huggingface"
       FASTEMBED_CACHE_PATH: "/cache/fastembed"
+      HOME: "/cache/fastembed"
     volumes:
       - ./app:/app/app
       - ./config:/app/config
