@@ -54,7 +54,7 @@ class AppSettings(BaseSettings):
     qdrant_collection_name: str = "collection-rag-v2"
     qdrant_use_sparse: bool = True
     qdrant_force_recreate: bool = False
-    qdrant_distance: str = "Cosine"
+    qdrant_distance: str = "COSINE"
     qdrant_on_disk_payload: bool = True
 
     sqlserver_host: str = "sqlserver"

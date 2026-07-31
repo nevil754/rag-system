@@ -59,7 +59,7 @@ vectorstore:
   collection_name: "collection-competeSrl-RAGv2"
   use_sparse: true
   force_recreate: false
-  distance: "Cosine"
+  distance: "COSINE"
   on_disk_payload: true
 
 memory:

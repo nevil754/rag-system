@@ -21,7 +21,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir --no-deps -r requirements.txt
 
-
+#THIS WORKS!!
 #carica models in fase di build di questa img, ma cosi i models finiscono nell'img invece io li voglio in volume docker apposito(cosi persistono anche agli shutdowns)! quindi ora verranno caricati al primo utilizzo di env var HF-HOME  
 #ora uso intfloat/multilingual-e5-large invece di BAAI/bge-m3, xk questo fastembed (v0.8.0) non supporta BAAI/bg3-m3
 # RUN python - <<'PY'
