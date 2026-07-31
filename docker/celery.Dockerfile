@@ -21,19 +21,18 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir --no-deps -r requirements.txt
 
-# RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-m3')" \
-#     || echo "fastembed model preload skipped (no internet in build)"
-#carica models in fase di build, 
-#ora uso intfloat/multilingual-e5-large invece di BAAI/bge-m3, in futuro check version of lib 'fastembed' che supporta BAAI/bge-m3!!
-RUN python - <<'PY'
-from fastembed import TextEmbedding
-from fastembed import SparseTextEmbedding
-from fastembed.rerank.cross_encoder import TextCrossEncoder
-TextEmbedding("intfloat/multilingual-e5-large")
-SparseTextEmbedding("prithivida/Splade_PP_en_v1")
-TextCrossEncoder("BAAI/bge-reranker-base")
-print("All AI models downloaded.")
-PY
+
+#carica models in fase di build di questa img, ma cosi i models finiscono nell'img invece io li voglio in volume docker apposito(cosi persistono anche agli shutdowns)! quindi ora verranno caricati al primo utilizzo di env var HF-HOME  
+#ora uso intfloat/multilingual-e5-large invece di BAAI/bge-m3, xk questo fastembed (v0.8.0) non supporta BAAI/bg3-m3
+# RUN python - <<'PY'
+# from fastembed import TextEmbedding
+# from fastembed import SparseTextEmbedding
+# from fastembed.rerank.cross_encoder import TextCrossEncoder
+# TextEmbedding("intfloat/multilingual-e5-large")  
+# SparseTextEmbedding("prithivida/Splade_PP_en_v1")
+# TextCrossEncoder("BAAI/bge-reranker-base")
+# print("All AI models downloaded.")
+# PY
 
 
 FROM python:3.11-slim-bookworm AS runtime
