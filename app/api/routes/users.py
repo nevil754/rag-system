@@ -56,12 +56,14 @@ async def create_user(
     )
     return UserSchema.model_validate( dict( row.fetchone()._mapping ) )
 
+
 @router.get("", response_model=list[UserSchema])
 async def list_users( tenant: AdminOnly, db: CurrentDB ) -> list[UserSchema]:
     rows = await db.execute(
         text( "SELECT id, email, full_name, role, is_active FROM users ORDER BY created_at DESC" )
     )
     return [ UserSchema.model_validate(dict(r._mapping)) for r in rows ]
+
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def deactivate_user(user_id: str, tenant: AdminOnly, db: CurrentDB) -> None:

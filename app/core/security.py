@@ -17,10 +17,10 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__round
 def hash_password(plain: str) -> str:
     return _pwd_context.hash(plain)
 
-def verify_password(plain: str, hashed: str) -> bool:
+def verify_password(plain: str, hashed: str) -> bool:   #se la psw plain passata dall'utente corrisponde a quella hashata nel db return True
     return _pwd_context.verify(plain, hashed)
 
-def create_access_token(
+def create_access_token(      #token utilizzato dal frontend fare login come admin (puo gestire multipli spaces)
     data: dict[str, Any],
     expires_delta: timedelta | None = None,   
 ) -> str:
@@ -30,14 +30,14 @@ def create_access_token(
     )
     to_encode["exp"] = expire
     to_encode["iat"] = datetime.now(timezone.utc)
-    token = jwt.encode(
+    token = jwt.encode(     #da datas passati, crea il JWT (che è un HEADER.PAYLOAD.SIGNATURE)
         to_encode,
         settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,   #attualmente uso HS256
     )
     return token
 
-def decode_access_token(token: str) -> dict[str, Any] | None:
+def decode_access_token(token: str) -> dict[str, Any] | None:   #backend riceve il JWT (che è un HEADER.PAYLOAD.SIGNATURE), ed estrae il payload (e.g.{"sub": "user123","tenant": "acme","role": "admin"})
     try:
         payload = jwt.decode(
             token,
@@ -61,11 +61,13 @@ def extract_tenant_from_token(token: str) -> tuple[str, str] | None:
         return None
     return tenant_id, tenant_slug
 
-def generate_api_key(length: int | None = None) -> tuple[str, str]:
+
+def generate_api_key(length: int | None = None) -> tuple[str, str]:   #token utilizzato dal frontend x muoversi within tenant-scoped
     key_length = length or settings.api_key_length
     api_key = f"rag_{secrets.token_urlsafe(key_length)}"
     key_hash = hash_api_key(api_key)
     return api_key, key_hash
+
 
 def hash_api_key(api_key: str) -> str:
     return hashlib.sha256(api_key.encode()).hexdigest()
@@ -80,4 +82,5 @@ def extract_bearer_token(authorization_header: str | None) -> str | None:
     if len(parts) != 2 or parts[0].lower() != "bearer":
         return None
     return parts[1]
+
 
