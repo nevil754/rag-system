@@ -20,7 +20,7 @@ services:
       QDRANT_URL: "http://qdrant:6333"
       BASE_URL_OLLAMA: "http://srvai2k22:11434/"   #"http://ollama:11434"
       #HF_HOME: "/cache/huggingface"
-      FASTEMBED_CACHE_PATH: "/cache/fastembed"   #fastembed ONLY WITH THIS KEY decide dove settare la sua cache (nel mio caso lo metto in un volume che persiste)
+      FASTEMBED_CACHE_PATH: "/cache/fastembed"   #fastembed ONLY WITH THIS KEY decide dove settare la sua cache (nel mio caso lo metto in un volume che persiste). pero puo essere override config.yam in cache_dir (che utilizzi proprio questa var quando scarichi il modello e.g. vedi embeddings.py). QUINDI IN REALTA questa env var non viene mai utilizzata, cmnq bene averla.
     depends_on:
       sqlserver:
         condition: service_healthy
