@@ -47,7 +47,7 @@ class AppSettings(BaseSettings):
     embeddings_model: str = "intfloat/multilingual-e5-large" #"BAAI/bge-m3"
     embeddings_base_url: str = ""
     embeddings_batch_size: int = 64
-    embeddings_cache_dir: str = "/app/.cache/embeddings"
+    embeddings_cache_dir: str = "/cache/fastembed"
 
     qdrant_url: str = "http://qdrant:6333"
     qdrant_api_key: str = ""

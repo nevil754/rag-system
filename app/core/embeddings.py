@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import Any
 from loguru import logger
 
+
 @lru_cache(maxsize=1)
 def get_embedding_model() -> Any:
     from app.core.settings import get_settings

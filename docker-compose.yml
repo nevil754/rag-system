@@ -31,7 +31,7 @@ services:
     volumes:
       - ./config:/app/config:ro
       - ${DATA_ROOT}/uploads:/app/uploads  #uploads_data:/app/uploads, 
-      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
+      - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -65,7 +65,7 @@ services:
       FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ${DATA_ROOT}/uploads:/app/uploads  #corretto deve sharing stesso volume anche con fastapi e celery-worker-default   #uploads_data:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
+      - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -103,7 +103,7 @@ services:
       FASTEMBED_CACHE_PATH: "/cache/fastembed"
     volumes:
       - ${DATA_ROOT}/uploads:/app/uploads   #uploads_data:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
+      - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
     depends_on:
       sqlserver:
         condition: service_healthy

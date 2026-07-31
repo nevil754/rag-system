@@ -23,7 +23,7 @@ services:
       - ./config:/app/config
       - ./main.py:/app/main.py
       - ${DATA_ROOT}/uploads:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
+      - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
     ports:
       - "8000:8000"
       - "5678:5678"
@@ -46,7 +46,7 @@ services:
       - ./app:/app/app
       - ./config:/app/config
       - ${DATA_ROOT}/uploads:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
+      - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
  
 
   celery-worker-default:
@@ -66,7 +66,7 @@ services:
       - ./app:/app/app
       - ./config:/app/config
       - ${DATA_ROOT}/uploads:/app/uploads
-      - ${DATA_ROOT}/huggingface-cache:/cache/fastembed
+      - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
 
 
   celery-beat:
