@@ -5,7 +5,6 @@ from starlette.responses import Response
 from app.core.security import decode_access_token, extract_bearer_token
 
 
-
 class TenantMiddleware(BaseHTTPMiddleware):
     """
     questo middleware arricchisce solo il request.state per uso nei log e nel rate limiter

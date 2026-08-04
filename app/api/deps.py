@@ -11,13 +11,13 @@ from app.db.sqlserver import tenant_db
 
 tenant_bearer_scheme = HTTPBearer(
     auto_error=False,
-    scheme_name="TenantBearer",
+    scheme_name="TENANTBearer",
     description="Incolla solo il token (senza il prefisso 'Bearer '): JWT tenant, per le route "
     "tenant-scoped (/chat, /documents, /collections, /jobs, /users, /auth/me ecc.).",
 )
 platform_bearer_scheme = HTTPBearer(
     auto_error=False,
-    scheme_name="PlatformBearer",
+    scheme_name="PLATFORMBearer",
     description="Incolla solo il token (senza il prefisso 'Bearer '): JWT platform, per /spaces "
     "e /tenants.",
 )
