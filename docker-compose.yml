@@ -228,7 +228,7 @@ services:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
-       #utilizzo di \\ x protezione da ! finale della mia psw su .env
+      #utilizzo di \\ x protezione da ! finale della mia psw su .env
       interval: 10s
       timeout: 5s
       retries: 5
