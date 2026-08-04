@@ -105,6 +105,11 @@ async def on_message(message: cl.Message) -> None:
         )
     except Exception as exc:
         await answer_msg.stream_token( f"\n\nErrore imprevisto: {exc}" )
+
+    final_answer = meta.get("answer")
+    if final_answer is not None and final_answer != answer_msg.content:
+        answer_msg.content = final_answer
+
     await answer_msg.update()
     new_conv_id = meta.get("conversation_id")
     if new_conv_id:

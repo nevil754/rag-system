@@ -213,6 +213,7 @@ def _cross_encoder_rerank(
     scores = reranker.predict(pairs)
     for result, score in zip(results, scores):
         result["rerank_score"] = float(score)
+        result["score"] = float(score)   #sovrascrive lo score RRF, da qui in poi "score" riflette la rilevanza reale determinata dal cross-encoder
     reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
     logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
     return reranked[:top_k]

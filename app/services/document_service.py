@@ -38,76 +38,84 @@ class DocumentService:
             )
         file_hash = hashlib.sha256(file_bytes).hexdigest()   #il risultato di sha-256 è attualmente binario quindi hexdigest() lo converte in str leggibile esadecimale
         existing = await self.db.execute(
-            text("SELECT id FROM documents WHERE file_hash = :hash"),
+            text("SELECT id FROM documents WHERE file_hash = :hash AND status != 'deleted'"),
             {"hash": file_hash}
         )
         if existing.fetchone():
             raise ValueError(f"Documento già caricato: {original_filename}")
 
         document_id = str(uuid4())
-        suffix = Path(original_filename).suffix   #.suffix restituisce estensione del file (e.g.'.pdf')
+        suffix = Path(original_filename).suffix.lower()   #.suffix restituisce estensione del file (e.g.'.pdf')
         saved_filename = f"{document_id}{suffix}"
         file_path = UPLOAD_DIR / self.tenant_slug / saved_filename   #OK here setto il path where save the files!
         file_path.parent.mkdir(parents=True, exist_ok=True)  #parents=True means se le cartelle superiori non esistono creale tutte, exist_ok=True means se la dir esiste gia non dare error
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
-        import mimetypes   #guess the file type watching the extension
-        mime_type = mimetypes.guess_type(original_filename)[0] or "application/octet-stream"  #e.g. mimetypes.guess_type("document.pdf")  return tupla (mime_type, encoding) quindi ("application/pdf", None), con [0] prendi solo il primo elemento. application/octet-stream è il MIME type generico per file binari sconosciuti.
+        try:
+            import mimetypes   #guess the file type watching the extension
+            mime_type = mimetypes.guess_type(original_filename)[0] or "application/octet-stream"  #e.g. mimetypes.guess_type("document.pdf")  return tupla (mime_type, encoding) quindi ("application/pdf", None), con [0] prendi solo il primo elemento. application/octet-stream è il MIME type generico per file binari sconosciuti.
 
-        await self.db.execute(
-            text("""
-                INSERT INTO documents
-                    (id, collection_id, filename, original_name, file_hash,
-                     file_size, mime_type, storage_path, status, uploaded_by)
-                VALUES
-                    (:id, :coll_id, :filename, :orig_name, :hash,
-                     :size, :mime, :path, 'pending', :user_id)
-            """),
-            {
-                "id": document_id,
-                "coll_id": collection_id,
-                "filename": saved_filename,
-                "orig_name": original_filename,
-                "hash": file_hash,
-                "size": len(file_bytes),
-                "mime": mime_type,
-                "path": str(file_path),
-                "user_id": self.user_id,
-            }
-        )
-        job_id = str(uuid4())
-        await self.db.execute(
-            text("""
-                INSERT INTO ingestion_jobs (id, document_id, status)
-                VALUES (:id, :doc_id, 'queued')
-            """),
-            {"id": job_id, "doc_id": document_id}
-        )
-        from app.workers.ingestion_tasks import ingest_document
-        task = ingest_document.apply_async(
-            args=[
-                self.tenant_id,
-                self.tenant_slug,
-                document_id,
-                str(file_path),
-                collection_id,
-            ],
-            queue="default",   #sets x this celery task
-            countdown=3,       #sets x this celery task
-            headers={"tenant_id": self.tenant_id},    #sets x this celery task
-        )
+            await self.db.execute(
+                text("""
+                    INSERT INTO documents
+                        (id, collection_id, filename, original_name, file_hash,
+                        file_size, mime_type, storage_path, status, uploaded_by)
+                    VALUES
+                        (:id, :coll_id, :filename, :orig_name, :hash,
+                        :size, :mime, :path, 'pending', :user_id)
+                """),
+                {
+                    "id": document_id,
+                    "coll_id": collection_id,
+                    "filename": saved_filename,
+                    "orig_name": original_filename,
+                    "hash": file_hash,
+                    "size": len(file_bytes),    
+                    "mime": mime_type,
+                    "path": str(file_path),
+                    "user_id": self.user_id,
+                }
+            )
+            from app.workers.ingestion_tasks import ingest_document
+            task = ingest_document.apply_async(
+                args=[
+                    self.tenant_id,
+                    self.tenant_slug,
+                    document_id,
+                    str(file_path),
+                    collection_id,
+                ],
+                queue="default",   #sets x this celery task
+                countdown=3,       #sets x this celery task
+                headers={"tenant_id": self.tenant_id},    #sets x this celery task
+            )
+            job_id = str(uuid4())
+            try: 
+                await self.db.execute(
+                    text("""
+                        INSERT INTO ingestion_jobs (id, document_id, status, celery_task_id)
+                        VALUES (:id, :doc_id, 'queued', :task_id)
+                    """),
+                    {"id": job_id, "doc_id": document_id, "task_id": task.id}
+                )
+            except Exception:
+                from app.workers.celery_app import celery_app
+                celery_app.control.revoke(task.id, terminate=False)
+        except Exception:
+            file_path.unlink(missing_ok=True)
+            raise
         logger.info(
             "Documento in coda",
-            document_id=document_id,
-            filename=original_filename,
-            task_id=task.id,
+            document_id = document_id,
+            filename = original_filename,
+            task_id = task.id
         )
         return {
-            "document_id": document_id,
-            "job_id": job_id,
-            "task_id": task.id,
-            "status": "queued",
+            "document_id" : document_id,
+            "job_id" : job_id,
+            "task_id" : task.id,
+            "status" : "queued"
         }
 
 
