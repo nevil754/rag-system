@@ -55,7 +55,7 @@ class TenantContext:
 async def get_current_tenant(
     request: Request,
     #authorization: Annotated[str | None, Header()] = None,
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(tenant_bearer_scheme)] = None,
     x_api_key: Annotated[str | None, Depends(api_key_scheme)] = None,
 ) -> TenantContext:
 

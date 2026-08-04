@@ -13,7 +13,7 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      #REDIS_URL: "redis://redis:6379/0" perche altrimenti il corretto REDIS_URL in .env sul server viene ignorato!
+      #REDIS_URL: "redis://redis:6379/0"  #DOVRESTI USARE PERO ok var gia settate in .env, quindi questo andrebbe commentato perche altrimenti il corretto REDIS_URL in .env sul server viene ignorato!
       SQLSERVER_HOST: "sqlserver"
       SQLSERVER_PORT: "1433"
       SQLSERVER_DB: "RAGChat"
@@ -59,7 +59,7 @@ services:
 
     env_file: .env
     environment:
-      #REDIS_URL: "redis://redis:6379/0"
+      #REDIS_URL: "redis://redis:6379/0"   #anche questa andrebbe commentata
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
       #HF_HOME: "/cache/huggingface"
@@ -98,7 +98,7 @@ services:
       --hostname=worker-default@%h
     env_file: .env
     environment:
-      #REDIS_URL: "redis://redis:6379/0"
+      #REDIS_URL: "redis://redis:6379/0"   #anche questa andrebbe commentata
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
       #HF_HOME: "/cache/huggingface"
@@ -128,7 +128,7 @@ services:
       --scheduler redbeat.RedBeatScheduler
     env_file: .env
     environment:
-      REDIS_URL: "redis://redis:6379/0"
+      #REDIS_URL: "redis://redis:6379/0"
     depends_on:
       - redis
     networks:
@@ -220,7 +220,7 @@ services:
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping"]
+      test: ["CMD-SHELL", "redis-cli -a $REDIS_PASSWORD ping"]
       interval: 10s
       timeout: 5s
       retries: 5
