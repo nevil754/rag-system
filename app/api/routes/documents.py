@@ -31,7 +31,24 @@ async def upload_document(
             status_code=400,
             detail=f"Formato non supportato: {suffix}. Accettati: {', '.join(e.lstrip('.') for e in ALLOWED_EXTENSIONS)}"
         )
-    file_bytes = await file.read()
+
+    max_bytes = settings.ingestion_max_file_mb * 1024 * 1024
+    chunk_size = 1024 * 1024
+    buffer: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File troppo grande (max {settings.ingestion_max_file_mb}MB)",
+            )
+        buffer.append(chunk)
+    
+    file_bytes = b"".join(buffer)
     service = DocumentService(
         db=db,
         tenant_id=tenant.tenant_id,
@@ -47,6 +64,7 @@ async def upload_document(
     except ValueError as e:
         raise HTTPException( status_code=400, detail=str(e) )
     return UploadResponse(**result)
+
 
 
 @router.get( "", response_model=PaginatedResponse[DocumentSchema] )
@@ -138,7 +156,12 @@ async def delete_document(
             )
         )
     except Exception as e:
-        logger.warning(f"Errore cancellazione vettori Qdrant: {e}")
+        #non fare soft-delete in SQL se i vettori Qdrant non sono stati cancellati, altrimenti il documento risulterebbe "eliminato" mentre i suoi chunk restano vivi e continuano a comparire nelle risposte di /chat (README9.md punto upload-E)
+        logger.error(f"Errore cancellazione vettori Qdrant per documento {document_id}: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail="Impossibile cancellare i vettori del documento su Qdrant; il documento non è stato eliminato. Riprova.",
+        )
     await db.execute(
         text("UPDATE documents SET status = 'deleted', updated_at = SYSUTCDATETIME() WHERE id = :id"),
         {"id": document_id}
