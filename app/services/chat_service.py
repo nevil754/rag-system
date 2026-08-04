@@ -42,7 +42,7 @@ class ChatService:
         stream: bool = False,
     ) -> dict[str, Any]:
         conv_id = conversation_id or str(uuid4())
-        query_hash = _hash_query( question, conv_id )
+        query_hash = _hash_query( question, conv_id, collection_id )
         cached = await self.redis.get_query_cache(query_hash)
         if cached:
             logger.debug("Cache hit per query RAG")
@@ -215,6 +215,7 @@ class ChatService:
             "latency_ms": latency_ms,
         }
         await self.redis.set_query_cache(query_hash, json.dumps(response_to_cache))   #ok attualmente non gli passo il ttl il time-to-live
+        await self._increment_usage_stats(tokens_in=0, tokens_out=0)   #tokens non disponibili in streaming (nessun conteggio token dal provider), ma queries_count deve comunque incrementare
         yield "\x1e" + json.dumps({
             "sources": sources,
             "conversation_id": conv_id,
