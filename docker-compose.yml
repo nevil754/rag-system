@@ -128,7 +128,8 @@ services:
       --scheduler redbeat.RedBeatScheduler
     env_file: .env
     environment:
-      #REDIS_URL: "redis://redis:6379/0"
+      REDIS_URL: ${REDIS_URL}  #"redis://redis:6379/0"
+      HOME: "/cache/fastembed"
     depends_on:
       - redis
     networks:
