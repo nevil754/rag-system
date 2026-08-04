@@ -142,7 +142,7 @@ services:
     restart: unless-stopped
     command: >
       celery
-      --broker=redis://redis:6379/0
+      --broker=redis://:${REDIS_PASSWORD}@redis:6379/0
       flower
       --port=5555
       --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
