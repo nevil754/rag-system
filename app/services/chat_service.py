@@ -47,6 +47,30 @@ class ChatService:
         if cached:
             logger.debug("Cache hit per query RAG")
             return json.loads(cached)
+            message_id = await self._save_messages(
+                conv_id=conv_id,
+                question=question,
+                answer=cached_data.get("answer", ""),
+                sources=cached_data.get("sources", []),
+                tokens_in=cached_data.get("tokens_in") or 0,
+                tokens_out=cached_data.get("tokens_out") or 0,
+                latency_ms=cached_data.get("latency_ms") or 0,
+                hallucination_score=None,   #cache hit: nessuna chiamata LLM, nessun nuovo check allucinazioni da salvare
+            )
+            await self.redis.append_message(conv_id, {
+                "role": "user", "content": question
+            }, settings.memory_short_term_turns)
+            await self.redis.append_message(conv_id, {
+                "role": "assistant", "content": cached_data.get("answer", "")
+            }, settings.memory_short_term_turns)
+            await self._increment_usage_stats(
+                tokens_in=cached_data.get("tokens_in") or 0,
+                tokens_out=cached_data.get("tokens_out") or 0,
+            )
+            cached_data["conversation_id"] = conv_id
+            cached_data["message_id"] = message_id
+            return cached_data
+        
         session_messages = await self.redis.get_session(conv_id)
         chunks = await retrieve(
             query=question,
@@ -58,7 +82,9 @@ class ChatService:
             question=question,
             chunks=chunks,
             session_messages=session_messages,
+            tenant_name=self.tenant_slug,
         )
+
 
         validation = validate_answer(result["answer"], question)
         if validation.was_modified:
@@ -113,17 +139,31 @@ class ChatService:
         collection_id: str | None = None,
     ) -> AsyncGenerator[str, None]:
         conv_id = conversation_id or str(uuid4())
-        query_hash = _hash_query(question, conv_id)
+        query_hash = _hash_query(question, conv_id, collection_id)
         cached = await self.redis.get_query_cache(query_hash)
         if cached:
             logger.debug("Cache hit per query RAG (streaming)")
             cached_data = json.loads(cached)
-            yield cached_data.get("answer", "")
+            cached_answer = cached_data.get("answer", "")
+            yield cached_answer
+
+            await self._save_messages(
+                conv_id=conv_id,
+                question=question,
+                answer=cached_answer,
+                sources=cached_data.get("sources", []),
+                latency_ms=cached_data.get("latency_ms") or 0,
+                hallucination_score=None,   #cache hit: nessuna chiamata LLM, nessun nuovo check allucinazioni da salvare
+            )
+            await self.redis.append_message(conv_id, {"role": "user", "content": question}, settings.memory_short_term_turns)
+            await self.redis.append_message(conv_id, {"role": "assistant", "content": cached_answer}, settings.memory_short_term_turns)
+            await self._increment_usage_stats(tokens_in=0, tokens_out=0)
 
             yield "\x1e" + json.dumps({
                 "sources": cached_data.get("sources", []),
                 "conversation_id": conv_id,
                 "latency_ms": cached_data.get("latency_ms"),
+                "answer": cached_answer,
             })
             return
         session_messages = await self.redis.get_session(conv_id)
@@ -139,6 +179,7 @@ class ChatService:
             question=question,
             chunks=chunks,
             session_messages=session_messages,
+            tenant_name=self.tenant_slug,
         ):
             full_answer += token
             yield token
@@ -179,6 +220,7 @@ class ChatService:
             "conversation_id": conv_id,
             "latency_ms": latency_ms,
             "hallucination_score": round(hall_score, 3),
+            "answer": full_answer,   #post-validate_answer(): puo differire dai token grezzi gia streammati se il validator ha corretto la risposta
         })
 
 
@@ -248,7 +290,7 @@ class ChatService:
         await pipe.execute()
 
 
-def _hash_query(question: str, conv_id: str) -> str:
+def _hash_query(question: str, conv_id: str, collection_id: str | None = None) -> str:
     normalized = question.strip().lower()
-    return hashlib.md5(f"{conv_id}:{normalized}".encode()).hexdigest()  #hasha usando MD5 per ottenere un hash unico della query e della conversazione
+    return hashlib.md5(f"{conv_id}:{collection_id or ''}:{normalized}".encode()).hexdigest()  #hasha usando MD5 per ottenere un hash unico della query e della conversazione
 
