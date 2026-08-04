@@ -96,7 +96,7 @@ services:
       --appendonly no
       --loglevel warning
     environment:
-      REDIS_PASSWORD: ""
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
  
 
   chainlit:
