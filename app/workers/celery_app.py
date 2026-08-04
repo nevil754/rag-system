@@ -1,5 +1,7 @@
 from __future__ import annotations
+from datetime import timedelta
 from celery import Celery
+from celery.schedules import crontab
 from kombu import Queue
 from app.core.settings import get_settings
 
@@ -11,6 +13,11 @@ def create_celery_app() -> Celery:
         "rag_worker",
         broker=settings.celery_broker_url,
         backend=settings.celery_result_backend,
+        include=[
+            "app.workers.ingestion_tasks",
+            "app.workers.cleanup_tasks",
+            "app.workers.scheduled_tasks",
+        ],
     )
 
     app.conf.update(
@@ -48,6 +55,16 @@ def create_celery_app() -> Celery:
         beat_scheduler="redbeat.RedBeatScheduler",
         redbeat_redis_url=settings.redis_url,
         redbeat_key_prefix="redbeat:",
+        beat_schedule={
+            "rollup-usage-daily": {
+                "task": "app.workers.scheduled_tasks.rollup_usage",
+                "schedule": crontab(hour=0, minute=0),
+            },
+            "expire-sessions-hourly": {
+                "task": "app.workers.cleanup_tasks.expire_sessions",
+                "schedule": timedelta(hours=1),
+            },
+        },
     )
     return app
 

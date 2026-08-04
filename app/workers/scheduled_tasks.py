@@ -1,21 +1,7 @@
 from __future__ import annotations
-from datetime import timedelta
-from celery.schedules import crontab
 from loguru import logger
 from sqlalchemy import text
 from app.workers.celery_app import celery_app
-
-
-celery_app.conf.beat_schedule = {
-    "rollup-usage-daily": {
-        "task": "app.workers.scheduled_tasks.rollup_usage",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "expire-sessions-hourly": {
-        "task": "app.workers.cleanup_tasks.expire_sessions",
-        "schedule": timedelta(hours=1),
-    },
-}
 
 
 @celery_app.task(
@@ -88,5 +74,4 @@ def rollup_usage() -> dict:
     loop.close()
     logger.info(f"Usage rollup completato: {saved} tenant salvati")
     return {"tenants_saved": saved}
-
 

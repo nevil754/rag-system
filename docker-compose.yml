@@ -13,7 +13,7 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      REDIS_URL: "redis://redis:6379/0"
+      #REDIS_URL: "redis://redis:6379/0" perche altrimenti il corretto REDIS_URL in .env sul server viene ignorato!
       SQLSERVER_HOST: "sqlserver"
       SQLSERVER_PORT: "1433"
       SQLSERVER_DB: "RAGChat"
@@ -59,7 +59,7 @@ services:
 
     env_file: .env
     environment:
-      REDIS_URL: "redis://redis:6379/0"
+      #REDIS_URL: "redis://redis:6379/0"
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
       #HF_HOME: "/cache/huggingface"
@@ -98,7 +98,7 @@ services:
       --hostname=worker-default@%h
     env_file: .env
     environment:
-      REDIS_URL: "redis://redis:6379/0"
+      #REDIS_URL: "redis://redis:6379/0"
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
       #HF_HOME: "/cache/huggingface"
