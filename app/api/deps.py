@@ -9,15 +9,22 @@ from app.core.security import decode_access_token, extract_bearer_token, hash_ap
 from app.db.sqlserver import tenant_db
 
 
-bearer_scheme = HTTPBearer(
+tenant_bearer_scheme = HTTPBearer(
     auto_error=False,
-    description="Incolla solo il token (senza il prefisso 'Bearer '): JWT tenant per le route "
-    "tenant-scoped, JWT platform per /spaces e /tenants.",
+    scheme_name="TenantBearer",
+    description="Incolla solo il token (senza il prefisso 'Bearer '): JWT tenant, per le route "
+    "tenant-scoped (/chat, /documents, /collections, /jobs, /users, /auth/me ecc.).",
+)
+platform_bearer_scheme = HTTPBearer(
+    auto_error=False,
+    scheme_name="PlatformBearer",
+    description="Incolla solo il token (senza il prefisso 'Bearer '): JWT platform, per /spaces "
+    "e /tenants.",
 )
 api_key_scheme = APIKeyHeader(
     name="X-API-Key",
     auto_error=False,
-    description="API Key formato rag_xxx — alternativa al Bearer, solo per il livello tenant.",
+    description="API Key formato rag_xxx — alternativa al Bearer, solo per il livello tenant. attualmente utilizzato solo da 1 script",
 )
 
 
@@ -168,7 +175,7 @@ class PlatformContext:
 
 async def get_current_platform_user(
     #authorization: Annotated[str | None, Header()] = None,
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(platform_bearer_scheme)] = None,
 ) -> PlatformContext:
     #token = extract_bearer_token(authorization)
     # if token:
