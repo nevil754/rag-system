@@ -211,18 +211,24 @@ services:
       - "127.0.0.1:6379:6379" #"6379:6379" xk non ho necessario che redis sia accessibile dall'esterno, cosi è avaible solo x ki sul server (non dalla LAN) 
     volumes:
       - ${DATA_ROOT}/redis:/data   #redis_data:/data
-    command: >
-      redis-server
-      --maxmemory 2gb
-      --maxmemory-policy allkeys-lru
-      --appendonly yes
-      --appendfsync everysec
-      --requirepass "${REDIS_PASSWORD}"
+    command:
+      - redis-server
+      - --maxmemory
+      - 2gb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - ${REDIS_PASSWORD}
     #"" xk la password contiene una '!' (expansion character x cmd)
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
+       #utilizzo di \\ x protezione da ! finale della mia psw su .env
       interval: 10s
       timeout: 5s
       retries: 5
