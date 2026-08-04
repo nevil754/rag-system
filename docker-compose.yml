@@ -217,7 +217,8 @@ services:
       --maxmemory-policy allkeys-lru
       --appendonly yes
       --appendfsync everysec
-      --requirepass ${REDIS_PASSWORD}
+      --requirepass "${REDIS_PASSWORD}"
+    #"" xk la password contiene una '!' (expansion character x cmd)
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     healthcheck:
