@@ -46,7 +46,7 @@ class ChatService:
         cached = await self.redis.get_query_cache(query_hash)
         if cached:
             logger.debug("Cache hit per query RAG")
-            return json.loads(cached)
+            cached_data = json.loads(cached)
             message_id = await self._save_messages(
                 conv_id=conv_id,
                 question=question,

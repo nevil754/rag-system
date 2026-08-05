@@ -102,6 +102,13 @@ class DocumentService:
             except Exception:
                 from app.workers.celery_app import celery_app
                 celery_app.control.revoke(task.id, terminate=False)
+                logger.error(
+                    "Insert ingestion_jobs fallita, task Celery revocato",
+                    document_id=document_id,
+                    task_id=task.id,
+                    error=str(job_exc),
+                )
+                raise
         except Exception:
             file_path.unlink(missing_ok=True)
             raise
