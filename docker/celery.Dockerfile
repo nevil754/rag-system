@@ -39,6 +39,10 @@ FROM python:3.11-slim-bookworm AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc \
     curl \
+    libgl1 \
+    libglib2.0-0 \
+    libmagic1 \
+    poppler-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
