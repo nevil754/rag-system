@@ -89,7 +89,17 @@ async def create_space(
         )
         owner = owner_row.fetchone()
     if not owner:
+        logger.warning(
+            "Creazione space fallita: account platform non trovato",
+            platform_user_id=platform_user.platform_user_id,
+        )
         raise HTTPException(status_code=404, detail="Account platform non trovato")
+    logger.info(
+        "Creazione nuovo space",
+        platform_user_id=platform_user.platform_user_id,
+        name=body.name,
+        slug=slug,
+    )
     await provision_tenant(
         slug=slug,
         display_name=body.name,
@@ -98,6 +108,7 @@ async def create_space(
         owner_email=owner.email,
         owner_password_hash=owner.password_hash,
     )
+    logger.info("Space creato", platform_user_id=platform_user.platform_user_id, slug=slug)
     return await _get_owned_space_by_slug(slug, platform_user.platform_user_id)
 
 
@@ -134,6 +145,12 @@ async def rename_space(
             {"name": body.name, "id": space_id, "owner_id": platform_user.platform_user_id}
         )
         await session.commit()
+    logger.info(
+        "Space rinominato",
+        space_id=space_id,
+        platform_user_id=platform_user.platform_user_id,
+        new_name=body.name,
+    )
     updated = await _get_owned_space(space_id, platform_user.platform_user_id)
     return SpaceSchema.model_validate(updated)
 
@@ -152,12 +169,22 @@ async def disable_space(space_id: str, platform_user: CurrentPlatformUser) -> No
             {"id": space_id, "owner_id": platform_user.platform_user_id}
         )
         await session.commit()
+    logger.info(
+        "Space disabilitato",
+        space_id=space_id,
+        platform_user_id=platform_user.platform_user_id,
+    )
 
 
 @router.post("/{space_id}/select", response_model=TokenResponse)
 async def select_space(space_id: str, platform_user: CurrentPlatformUser) -> TokenResponse:
     space = await _get_owned_space(space_id, platform_user.platform_user_id)
     if not space["is_active"]:
+        logger.warning(
+            "Select space rifiutato: space disabilitato",
+            space_id=space_id,
+            platform_user_id=platform_user.platform_user_id,
+        )
         raise HTTPException(status_code=403, detail="Space disabilitato")
     token = create_access_token(data={
         "sub": platform_user.platform_user_id,
@@ -166,6 +193,12 @@ async def select_space(space_id: str, platform_user: CurrentPlatformUser) -> Tok
         "tenant_id": str(space["id"]),
         "tenant_slug": space["slug"],
     })
+    logger.info(
+        "Space selezionato: JWT tenant-scoped emesso",
+        space_id=space_id,
+        tenant_slug=space["slug"],
+        platform_user_id=platform_user.platform_user_id,
+    )
     return TokenResponse(
         access_token=token,
         expires_in=settings.jwt_expire_minutes * 60,

@@ -8,7 +8,6 @@ from app.services.tenant_service import provision_tenant
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
-
 class TenantCreate(BaseModel):
     slug: str
     display_name: str
@@ -36,6 +35,12 @@ async def create_tenant(
     platform_user: SuperAdminOnly,
 ) -> TenantResponse:
     #_require_superadmin(tenant)
+    logger.info(
+        "Creazione tenant via /tenants (superadmin)",
+        superadmin_id=platform_user.platform_user_id,
+        slug=body.slug,
+        plan=body.plan,
+    )
     result = await provision_tenant(
         slug=body.slug,
         display_name=body.display_name,
@@ -71,6 +76,11 @@ async def disable_tenant(slug: str, platform_user: SuperAdminOnly) -> dict:
             {"slug": slug}
         )
         await session.commit()
+    logger.warning(
+        "Tenant disabilitato (superadmin)",
+        superadmin_id=platform_user.platform_user_id,
+        slug=slug,
+    )
     return { "message": f"Tenant {slug} disabilitato" }
 
 

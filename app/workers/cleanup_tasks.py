@@ -14,14 +14,21 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
     from app.core.vectorstore import adelete_tenant_collections
     from app.core.redis_client import TenantRedis
 
-    logger.warning(f"Purge tenant avviato: {tenant_slug}")
+    start = time.perf_counter()
+    log = logger.bind(tenant_id=tenant_id, tenant_slug=tenant_slug)
+    log.warning("Purge tenant avviato — operazione distruttiva e irreversibile")
+
     loop = asyncio.new_event_loop()
     loop.run_until_complete( adelete_tenant_collections(tenant_slug) )
     loop.close()
+    log.info("Purge tenant: collection Qdrant cancellate")
+
     loop = asyncio.new_event_loop()
     redis = TenantRedis( tenant_id = tenant_id )
     deleted_keys = loop.run_until_complete( redis.flush_tenant() )
     loop.close()
+    log.info("Purge tenant: chiavi Redis cancellate", redis_keys_deleted=deleted_keys)
+
     schema_name = "tenant_" + tenant_slug.replace("-", "_")
     with tenant_db.sync_factory() as session:
         session.execute(
@@ -32,9 +39,16 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
         session.commit()
 
     logger.info(
-        "Purge tenant completato",
+        "Purge tenant completato : schema SQL Server rimosso",
+        schema=schema_name
         tenant=tenant_slug,
         redis_keys_deleted=deleted_keys,
+    )
+    elapsed_ms = round((time.perf_counter() - start) * 1000)
+    log.warning(
+        "Purge tenant completato",
+        redis_keys_deleted=deleted_keys,
+        elapsed_ms=elapsed_ms,
     )
     return {"status": "purged", "tenant": tenant_slug}
 
@@ -63,6 +77,7 @@ def expire_sessions() -> dict:
                 break
         return fixed
 
+    logger.debug("Session cleanup: avvio scan chiavi Redis senza TTL")
     loop = asyncio.new_event_loop()
     fixed = loop.run_until_complete( _cleanup() )
     loop.close()

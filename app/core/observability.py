@@ -13,6 +13,17 @@ def setup_all(settings: "AppSettings") -> None:
     setup_langsmith(settings)
     setup_opentelemetry(settings)
 
+def _console_format(record: dict) -> str:
+    base = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{line}</cyan> | "
+        "<level>{message}</level>"
+    )
+    if record["extra"]:
+        base += " <yellow>{extra}</yellow>"
+    return base + "\n"
+
 
 def setup_logging(settings: "AppSettings") -> None:
     logger.remove()
@@ -28,16 +39,23 @@ def setup_logging(settings: "AppSettings") -> None:
             diagnose=False,
         )
     else:
-        fmt = (
-            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-            "<level>{level: <8}</level> | "
-            "<cyan>{name}</cyan>:<cyan>{line}</cyan> | "
-            "<level>{message}</level>"
+        logger.add(
+            sys.stdout,
+            level=level,
+            format=_console_format,
+            colorize=settings.log_colored,
         )
-        if settings.log_colored:
-            logger.add(sys.stdout, level=level, format=fmt, colorize=True)
-        else:
-            logger.add(sys.stdout, level=level, format=fmt, colorize=False)
+        
+        # fmt = (
+        #     "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        #     "<level>{level: <8}</level> | "
+        #     "<cyan>{name}</cyan>:<cyan>{line}</cyan> | "
+        #     "<level>{message}</level>"
+        # )
+        # if settings.log_colored:
+        #     logger.add(sys.stdout, level=level, format=fmt, colorize=True)
+        # else:
+        #     logger.add(sys.stdout, level=level, format=fmt, colorize=False)
 
     _intercept_stdlib_logging()
     logger.info(

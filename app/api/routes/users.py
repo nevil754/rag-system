@@ -32,6 +32,10 @@ async def create_user(
     db: CurrentDB,
 ) -> UserSchema:
     if len(body.password) < settings.password_min_length:
+        logger.warning(
+            "Creazione utente rifiutata: password troppo corta",
+            tenant_id=tenant.tenant_id, email=body.email,
+        )
         raise HTTPException(
             status_code=400,
             detail=f"Password troppo corta (min {settings.password_min_length} caratteri)"
@@ -49,6 +53,11 @@ async def create_user(
             "role": body.role,
             "pwd_hash": hash_password( body.password ),
         }
+    )
+    logger.info(
+        "Utente creato",
+        tenant_id=tenant.tenant_id, created_by=tenant.user_id,
+        user_id=user_id, email=body.email, role=body.role,
     )
     row = await db.execute(
         text("SELECT id, email, full_name, role, is_active FROM users WHERE id = :id"),
@@ -70,5 +79,9 @@ async def deactivate_user(user_id: str, tenant: AdminOnly, db: CurrentDB) -> Non
     await db.execute(
         text("UPDATE users SET is_active = 0 WHERE id = :id"),
         {"id": user_id}
+    )
+    logger.info(
+        "Utente disattivato",
+        tenant_id=tenant.tenant_id, deactivated_by=tenant.user_id, user_id=user_id,
     )
 

@@ -31,7 +31,13 @@ async def retrieve(
     filters: dict | None = None,
 ) -> list[RetrievedChunk]:
     k = top_k or settings.retriever_top_k
-    logger.debug(f"Retrieval: query='{query[:50]}...', top_k={k}")
+    logger.debug(
+        "Retrieval: avvio",
+        query_preview=query[:50],
+        top_k=k,
+        tenant_slug=tenant_slug,
+        collection_id=collection_id,
+    )
     from app.core.embeddings import aembed_query
     query_vector = await aembed_query(query)
     from app.core.vectorstore import get_async_qdrant_client, get_collection_name
@@ -83,12 +89,17 @@ async def retrieve(
                 with_payload=True,
             )
         except Exception as e:
-            logger.warning(f"Sparse search fallita: {e}")
+            logger.warning("Sparse search fallita, proseguo solo con dense", error=str(e))
 
+    logger.debug(
+        "Retrieval: risultati grezzi",
+        dense=len(dense_results), sparse=len(sparse_results),
+    )
     fused = _rrf_fusion(dense_results, sparse_results, k=k)
 
     if settings.retriever_strategy == "mmr" and len(fused) > 1:
         fused = _mmr_rerank(query_vector, fused, lambda_param=settings.retriever_mmr_lambda)
+        logger.debug("Retrieval: MMR applicata", risultati=len(fused))
     if settings.reranker_enabled and len(fused) > 1:
         fused = await _async_cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
 
@@ -215,7 +226,8 @@ def _cross_encoder_rerank(
         result["rerank_score"] = float(score)
         result["score"] = float(score)   #sovrascrive lo score RRF, da qui in poi "score" riflette la rilevanza reale determinata dal cross-encoder
     reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
-    logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
+    logger.debug("Reranking cross-encoder completato", da=len(results), a=top_k)
+    #logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
     return reranked[:top_k]
 
 

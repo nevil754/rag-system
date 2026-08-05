@@ -37,6 +37,11 @@ async def create_collection(
     row = await db.execute(
         text("SELECT * FROM collections WHERE id = :id"), {"id": coll_id}
     )
+    logger.info(
+        "Collection creata",
+        tenant_id=tenant.tenant_id, created_by=tenant.user_id,
+        collection_id=coll_id, name=body.name,
+    )
     return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )
 
 
@@ -71,6 +76,10 @@ async def delete_collection(
     await db.execute(
         text("UPDATE collections SET is_active = 0 WHERE id = :id"),
         {"id": collection_id}
+    )
+    logger.info(
+        "Collection eliminata (soft-delete)",
+        tenant_id=tenant.tenant_id, deleted_by=tenant.user_id, collection_id=collection_id,
     )
 
 

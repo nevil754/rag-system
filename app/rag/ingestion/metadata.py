@@ -49,9 +49,9 @@ def _classify_document(text_sample: str, filename: str) -> str:
             continue
         keywords = type_cfg.get("detect_keywords", [])
         if any( kw.lower() in text_lower for kw in keywords ):
-            logger.debug(f"Documento classificato come: {doc_type}")
+            logger.debug("Documento classificato", doc_type=doc_type, filename=filename)
             return doc_type
-
+    logger.debug("Documento classificato (nessun keyword match)", doc_type="generic", filename=filename)
     return "generic"
 
 

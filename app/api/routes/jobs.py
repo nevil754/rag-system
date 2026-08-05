@@ -5,6 +5,7 @@ from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.schemas.common import PaginatedResponse
 from app.schemas.document import IngestionJobSchema
 
+
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
@@ -70,8 +71,13 @@ async def cancel_job(
     )
     job = row.fetchone()
     if not job:
+        logger.warning("Cancel job fallito: job non trovato", job_id=job_id, tenant_id=tenant.tenant_id)
         raise HTTPException(status_code=404, detail="Job non trovato")
     if job.status not in ("queued", "running"):
+        logger.info(
+            "Cancel job rifiutato: stato non annullabile",
+            job_id=job_id, tenant_id=tenant.tenant_id, status=job.status,
+        )
         raise HTTPException(status_code=400, detail=f"Job non annullabile in stato: {job.status}")
     from app.workers.celery_app import celery_app
     task_row = await db.execute(
@@ -81,10 +87,20 @@ async def cancel_job(
     task_row_data = task_row.fetchone()
     if task_row_data and task_row_data.celery_task_id:
         celery_app.control.revoke( task_row_data.celery_task_id, terminate=True )   #revocate target task di Celery (ignora il processo target / ferma il processo target se è in esecuzione), control.revoke() è gia build-in
+        logger.info(
+            "Task Celery revocato",
+            job_id=job_id, celery_task_id=task_row_data.celery_task_id, tenant_id=tenant.tenant_id,
+        )
+    else:
+        logger.warning(
+            "Cancel job: nessun celery_task_id noto, revoke saltata (task solo marcato cancelled in DB)",
+            job_id=job_id, tenant_id=tenant.tenant_id,
+        )
     await db.execute(
         text("UPDATE ingestion_jobs SET status = 'cancelled' WHERE id = :id"),
         {"id": job_id}
     )
+    logger.info("Job cancellato", job_id=job_id, tenant_id=tenant.tenant_id, previous_status=job.status)
     return {"message": "Job cancellato", "job_id": job_id}
 
 

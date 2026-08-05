@@ -16,8 +16,12 @@ async def provision_tenant(
     owner_password_hash: str | None = None,
 ) -> dict:
     
-    logger.info(f"Provisioning tenant: {slug}")
+    start = time.perf_counter()
+    log = logger.bind(tenant_slug=slug, plan=plan)
+    log.info("Provisioning tenant: avvio", display_name=display_name, self_service=bool(owner_user_id))
+
     await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan, owner_user_id=owner_user_id, )  #execute function of tenant_db that came from sqlserver.py
+    log.debug("Schema/tabelle tenant create su SQL Server")
     
     async with tenant_db.async_factory() as session:
         from sqlalchemy import text
@@ -27,13 +31,15 @@ async def provision_tenant(
         )
         fetched = row.fetchone()
         if not fetched:
+            log.error("Tenant non trovato subito dopo il provisioning SQL")
             raise ValueError(f"Tenant '{slug}' non trovato dopo provisioning")
         tenant_id = str(fetched.id)
+    log = log.bind(tenant_id=tenant_id)
 
     import asyncio
     loop = asyncio.get_running_loop()
     await loop.run_in_executor( None, ensure_collection, slug )
-    logger.info(f"Collection Qdrant creata per tenant: {slug}")
+    logger.info(f"Collection Qdrant creata per il tenant: {slug}")
     admin_user_id = None
     if admin_email and admin_password:
         from uuid import uuid4
@@ -50,7 +56,7 @@ async def provision_tenant(
                     "pwd_hash": hash_password(admin_password),
                 }
             )
-        logger.info(f"Admin creato per tenant {slug}: {admin_email}")
+        log.info("Admin creato per il tenant", admin_email=admin_email, admin_user_id=admin_user_id)
     elif owner_user_id and owner_email and owner_password_hash:
         #Lo Space è creato dal proprio owner (platform user): riusiamo lo stesso id e lo
         # stesso hash password già presenti in shared.platform_users, nessun re-hash, così
@@ -68,8 +74,13 @@ async def provision_tenant(
                     "pwd_hash": owner_password_hash,
                 }
             )
-        logger.info(f"Owner collegato come admin del tenant {slug}: {owner_email}")
-    logger.info(f"Provisioning completato: {slug} (tenant_id={tenant_id})")
+        log.info("Owner platform collegato come admin del tenant", owner_email=owner_email)
+
+    else:
+        log.warning("Provisioning senza admin/owner: nessun utente creato nel nuovo tenant")
+    elapsed_ms = round((time.perf_counter() - start) * 1000)
+    log.info("Provisioning tenant completato", admin_user_id=admin_user_id, elapsed_ms=elapsed_ms)
+    
     return {
         "tenant_id": tenant_id,
         "slug": slug,

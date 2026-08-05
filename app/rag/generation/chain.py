@@ -20,7 +20,14 @@ async def arun_rag_chain(
     tenant_name: str = "Compet-e Compliance AI",
 ) -> dict[str, Any]:
     start = time.perf_counter()
+    logger.debug(
+        "RAG chain: avvio generazione",
+        tenant=tenant_name,
+        chunks=len(chunks),
+        history_turns=len(session_messages),
+    )
     if not chunks:
+        logger.info("RAG chain: nessun chunk rilevante, fallback senza LLM", tenant=tenant_name)
         return {
             "answer": get_no_context_message(),
             "sources": [],
@@ -65,7 +72,14 @@ async def astream_rag_chain(
     session_messages: list[dict],
     tenant_name: str = "Compet-e Compliance AI",
 ) -> AsyncGenerator[str, None]:
+    logger.debug(
+        "RAG chain streaming: avvio generazione",
+        tenant=tenant_name,
+        chunks=len(chunks),
+        history_turns=len(session_messages),
+    )
     if not chunks:
+        logger.info("RAG chain streaming: nessun chunk rilevante, fallback senza LLM", tenant=tenant_name)
         yield get_no_context_message()
         return
     ctx = build_rag_context(chunks, session_messages)

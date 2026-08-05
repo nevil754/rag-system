@@ -24,6 +24,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 limit=settings.rate_limit_requests_per_minute,
             )
             if not allowed:
+                logger.warning(
+                    "Rate limit superato",
+                    tenant_id=tenant_id,
+                    user_id=user_id,
+                    path=request.url.path,
+                    count=count,
+                    limit=settings.rate_limit_requests_per_minute,
+                )
                 return JSONResponse(
                     status_code=429,
                     content={
@@ -33,7 +41,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     },
                     headers={"Retry-After": "60"},
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "Check rate limit fallito (Redis irraggiungibile?) — richiesta passata senza limite (fail-open)",
+                tenant_id=tenant_id, user_id=user_id, path=request.url.path, error=str(exc),
+            )
+            #pass
         return await call_next(request)
 

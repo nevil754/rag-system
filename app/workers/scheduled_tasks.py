@@ -13,6 +13,9 @@ def rollup_usage() -> dict:
     from app.db.sqlserver import tenant_db
     from app.core.redis_client import get_redis
 
+    start = time.perf_counter()
+    logger.info("Usage rollup: avvio")
+
     async def _get_all_tenants():
         async with tenant_db.async_factory() as session:
             result = await session.execute(
@@ -37,6 +40,7 @@ def rollup_usage() -> dict:
         }
     loop = asyncio.new_event_loop()
     tenants = loop.run_until_complete( _get_all_tenants() )
+    logger.debug("Usage rollup: tenant attivi trovati", count=len(tenants))
     saved = 0
     for tenant in tenants:
         stats = loop.run_until_complete( _get_tenant_stats(str(tenant.id)) )
@@ -72,6 +76,11 @@ def rollup_usage() -> dict:
             session.commit()
         saved += 1
     loop.close()
-    logger.info(f"Usage rollup completato: {saved} tenant salvati")
+    elapsed_ms = round((time.perf_counter() - start) * 1000)
+    logger.info(
+        "Usage rollup completato",
+        tenants_checked=len(tenants), tenants_saved=saved, elapsed_ms=elapsed_ms,
+    )
     return {"tenants_saved": saved}
+
 

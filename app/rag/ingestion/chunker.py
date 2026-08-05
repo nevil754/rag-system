@@ -49,9 +49,12 @@ def chunk_document(
             metadata={ **(base_metadata or {}), "chunk_index": i },
         ))
     logger.debug(
-        f"Chunking completato: {len(raw_chunks)} → {len(chunks)} chunk validi",
+        "Chunking completato",
         strategy=strategy,
         chunk_size=chunk_size,
+        overlap=overlap,
+        chunk_count=len(chunks),
+        discarded_too_short=discarded,
     )
     return chunks
 
