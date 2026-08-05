@@ -40,7 +40,7 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
 
     logger.info(
         "Purge tenant completato : schema SQL Server rimosso",
-        schema=schema_name
+        schema=schema_name,
         tenant=tenant_slug,
         redis_keys_deleted=deleted_keys,
     )
