@@ -43,7 +43,6 @@ async def create_user(
             detail=f"Password troppo corta (min {settings.password_min_length} caratteri)"
         )
     user_id = str(uuid4())
-    logger.warning("my1-ARRIVATO FINO A PRIMA DEL DB.EXECUTE()")
     await db.execute(
         text("""
             INSERT INTO users (id, email, full_name, role, password_hash)
@@ -57,7 +56,6 @@ async def create_user(
             "pwd_hash": hash_password( body.password ),
         }
     )
-    logger.warning("my2-ARRIVATO FINO A DOPO DB.EXECUTE()")
     logger.info(
         "Utente creato",
         tenant_id=tenant.tenant_id, created_by=tenant.user_id,
@@ -67,7 +65,6 @@ async def create_user(
         text("SELECT id, email, full_name, role, is_active FROM users WHERE id = :id"),
         {"id": user_id}
     )
-    logger.warning("my3-ARRIVATO FINO A DOPO DB.EXECUTE() (il second)")
     return UserSchema.model_validate( dict( row.fetchone()._mapping ) )
 
 

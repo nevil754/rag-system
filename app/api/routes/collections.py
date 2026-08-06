@@ -5,6 +5,9 @@ from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.core.vectorstore import aensure_collection
 from app.schemas.common import PaginatedResponse
 from app.schemas.document import CollectionCreate, CollectionSchema
+from loguru import logger
+
+
 
 router = APIRouter(prefix="/collections", tags=["collections"])
 
@@ -20,7 +23,9 @@ async def create_collection(
 
     coll_id = str(uuid4())
     qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"
+    logger.warning("my1-ARRIVATO FINO A PRIMA DI AENSURE_COLLECTION()")
     await aensure_collection( tenant.tenant_slug )
+    logger.warning("my2-ARRIVATO FINO A DOPO AENSURE_COLLECTION()")
     await db.execute(
         text("""
             INSERT INTO collections (id, name, description, qdrant_name, created_by)
@@ -34,6 +39,7 @@ async def create_collection(
             "user_id": tenant.user_id,
         }
     )
+    logger.warning("my3-ARRIVATO FINO A DOPO DB.EXECUTE()")
     row = await db.execute(
         text("SELECT * FROM collections WHERE id = :id"), {"id": coll_id}
     )
