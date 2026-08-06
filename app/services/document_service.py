@@ -99,7 +99,7 @@ class DocumentService:
                     """),
                     {"id": job_id, "doc_id": document_id, "task_id": task.id}
                 )
-            except Exception:
+            except Exception as job_exc:
                 from app.workers.celery_app import celery_app
                 celery_app.control.revoke(task.id, terminate=False)
                 logger.error(

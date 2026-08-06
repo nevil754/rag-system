@@ -23,7 +23,8 @@ def ingest_document(
     collection_id: str | None = None,
 ) -> dict:
     from app.db.sqlserver import tenant_db
-    from app.core.redis_client import TenantRedis
+    #from app.core.redis_client import TenantRedis
+    from app.core.redis_client import invalidate_tenant_query_cache_sync
     from app.rag.ingestion.pipeline import run_ingestion_pipeline
     task_id = self.request.id  #this came from Celery this task that is happening
     log = logger.bind(
@@ -88,13 +89,8 @@ def ingest_document(
                     "id": document_id,
                 }
             )
-        import asyncio
-        redis = TenantRedis(tenant_id=tenant_id)
-        loop = asyncio.new_event_loop()
-        try:
-            invalidated = loop.run_until_complete(redis.invalidate_query_cache())
-        finally:
-            loop.close()
+
+        invalidated = invalidate_tenant_query_cache_sync(tenant_id)
         log.info(f"Cache invalidata: {invalidated} chiavi")
         return {
             "status": "done",
@@ -102,6 +98,21 @@ def ingest_document(
             "chunk_count": result["chunk_count"],
             "elapsed_ms": elapsed_ms,
         }
+        
+        # import asyncio
+        # redis = TenantRedis(tenant_id=tenant_id)
+        # loop = asyncio.new_event_loop()
+        # try:
+        #     invalidated = loop.run_until_complete(redis.invalidate_query_cache())
+        # finally:
+        #     loop.close()
+        # log.info(f"Cache invalidata: {invalidated} chiavi")
+        # return {
+        #     "status": "done",
+        #     "document_id": document_id,
+        #     "chunk_count": result["chunk_count"],
+        #     "elapsed_ms": elapsed_ms,
+        # }
 
     except Exception as exc:
         log.error(f"Ingestion fallita: {exc}")

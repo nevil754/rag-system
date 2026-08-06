@@ -38,7 +38,9 @@ def chunk_document(
     raw_chunks = splitter.split_text(text)
 
     min_size = max(50, chunk_size // 20)
-    raw_chunks = [ c for c in raw_chunks if len(c.strip()) >= min_size ]
+    filtered_chunks = [ c for c in raw_chunks if len(c.strip()) >= min_size ]
+    discarded = len(raw_chunks) - len(filtered_chunks)
+    raw_chunks = filtered_chunks
     chunks: list[Chunk] = []
     for i, chunk_text in enumerate(raw_chunks):
         page_num = _find_page_number(chunk_text, pages) if pages else None
@@ -64,4 +66,5 @@ def _find_page_number( chunk_text: str, pages: list[str] ) -> int | None:
         if chunk_text[:100] in page_text:
             return i
     return None
+
 

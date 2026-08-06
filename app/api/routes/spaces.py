@@ -1,6 +1,7 @@
 from __future__ import annotations
 import secrets
 from datetime import datetime
+from loguru import logger
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from slugify import slugify

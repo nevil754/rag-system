@@ -9,13 +9,14 @@ from app.api.deps import CurrentDB, CurrentRedis, CurrentTenant
 from app.schemas.chat import ChatRequest, ChatResponse, FeedbackRequest
 from app.services.chat_service import ChatService
 
+
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("/query", response_model=ChatResponse)
 async def chat_query(
     request: ChatRequest,
     tenant: CurrentTenant,
-    db: CurrentDB,
+    #db: CurrentDB,
     redis: CurrentRedis,
 ) -> ChatResponse:
     logger.info(
@@ -27,7 +28,7 @@ async def chat_query(
         question_len=len(request.question),
     )
     service = ChatService(
-        db=db,
+        #db=db,
         redis=redis,
         tenant_id=tenant.tenant_id,
         tenant_slug=tenant.tenant_slug,
@@ -61,9 +62,10 @@ async def chat_query(
 async def chat_stream(
     request: ChatRequest,
     tenant: CurrentTenant,
-    db: CurrentDB,
+    #db: CurrentDB,
     redis: CurrentRedis,
 ) -> StreamingResponse:
+    
     logger.info(
         "Chat stream ricevuta",
         tenant_id=tenant.tenant_id,
@@ -73,22 +75,21 @@ async def chat_stream(
         question_len=len(request.question),
     )
     service = ChatService(
-        db=db,
+        #db=db,
         redis=redis,
         tenant_id=tenant.tenant_id,
         tenant_slug=tenant.tenant_slug,
         user_id=tenant.user_id,
     )
     async def event_generator():
+        meta: dict = {}
         try:
-            meta: dict = {}
             async for token in service.stream_query(
                 question=request.question,
                 conversation_id=request.conversation_id,
                 collection_id=request.collection_id,
             ):
                 if token.startswith("\x1e"):
-
                     meta = json.loads(token[1:])
                 else:
                     yield f"data: {json.dumps({'token': token})}\n\n"
@@ -115,6 +116,7 @@ async def chat_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
 
 @router.post("/feedback")
 async def submit_feedback(

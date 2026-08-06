@@ -9,11 +9,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.redis_client import TenantRedis
 from app.core.settings import get_settings
+from app.db.sqlserver import tenant_db
 from app.rag.retrieval.retriever import retrieve
 from app.rag.generation.chain import arun_rag_chain, astream_rag_chain
 from app.rag.generation.answer_validator import validate_answer
 from app.rag.generation.hallucination import check_faithfulness, is_hallucination
 from app.rag.memory.context_builder import format_sources_for_response
+
 
 settings = get_settings()
 
@@ -22,13 +24,13 @@ class ChatService:
 
     def __init__(
         self,
-        db: AsyncSession,
+        #db: AsyncSession,
         redis: TenantRedis,
         tenant_id: str,
         tenant_slug: str,
         user_id: str,
     ):
-        self.db = db
+        #self.db = db
         self.redis = redis
         self.tenant_id = tenant_id
         self.tenant_slug = tenant_slug
@@ -236,44 +238,46 @@ class ChatService:
         latency_ms: int = 0,
         hallucination_score: float | None = None,
     ) -> int:
-        from app.core.settings import get_settings
-        settings = get_settings()
-        await self.db.execute(
-            text("""
-                IF NOT EXISTS (SELECT 1 FROM conversations WHERE id = :id)
-                INSERT INTO conversations (id, user_id, mode)
-                VALUES (:id, :user_id, 'rag')
-            """),
-            {"id": conv_id, "user_id": self.user_id}
-        )
+        
+        # from app.core.settings import get_settings
+        # settings = get_settings()
 
-        await self.db.execute(
-            text("""
-                INSERT INTO messages (conversation_id, role, content)
-                VALUES (:conv_id, 'user', :content)   
-            """),
-            {"conv_id": conv_id, "content": question}
-        )  #TODO usa di default 'user'! check in future all ok
+        async with tenant_db.aget_session(self.tenant_slug) as session:
+            await session.execute(
+                text("""
+                    IF NOT EXISTS (SELECT 1 FROM conversations WHERE id = :id)
+                    INSERT INTO conversations (id, user_id, mode)
+                    VALUES (:id, :user_id, 'rag')
+                """),
+                {"id": conv_id, "user_id": self.user_id}
+            )
+            await session.execute(
+                text("""
+                    INSERT INTO messages (conversation_id, role, content)
+                    VALUES (:conv_id, 'user', :content)   
+                """),
+                {"conv_id": conv_id, "content": question}
+            )  #TODO usa di default 'user'! check in future all ok
 
-        result = await self.db.execute(
-            text("""
-                INSERT INTO messages
-                    (conversation_id, role, content, sources, tokens_in, tokens_out, latency_ms, hallucination_score)
-                OUTPUT INSERTED.id
-                VALUES (:conv_id, 'assistant', :content, :sources, :tokens_in, :tokens_out, :latency_ms, :hall_score)
-            """),
-            {
-                "conv_id": conv_id,
-                "content": answer,
-                "sources": json.dumps(sources),
-                "tokens_in": tokens_in,
-                "tokens_out": tokens_out,
-                "latency_ms": latency_ms,
-                "hall_score": hallucination_score,
-            }
-        )
-        row = result.fetchone()
-        return row[0] if row else 0
+            result = await session.execute(
+                text("""
+                    INSERT INTO messages
+                        (conversation_id, role, content, sources, tokens_in, tokens_out, latency_ms, hallucination_score)
+                    OUTPUT INSERTED.id
+                    VALUES (:conv_id, 'assistant', :content, :sources, :tokens_in, :tokens_out, :latency_ms, :hall_score)
+                """),
+                {
+                    "conv_id": conv_id,
+                    "content": answer,
+                    "sources": json.dumps(sources),
+                    "tokens_in": tokens_in,
+                    "tokens_out": tokens_out,
+                    "latency_ms": latency_ms,
+                    "hall_score": hallucination_score,
+                }
+            )
+            row = result.fetchone()
+            return row[0] if row else 0
 
     async def _increment_usage_stats( self, tokens_in: int, tokens_out: int ) -> None:
         from datetime import date

@@ -2,8 +2,10 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from typing import Any
+import redis as sync_redis
 import redis.asyncio as aioredis
 from loguru import logger
+
 
 @lru_cache(maxsize=1)
 def get_redis() -> aioredis.Redis:
@@ -18,6 +20,7 @@ def get_redis() -> aioredis.Redis:
         retry_on_timeout=True,
     )
 
+
 @lru_cache(maxsize=1)
 def get_cache_redis() -> aioredis.Redis:
     from app.core.settings import get_settings
@@ -28,6 +31,28 @@ def get_cache_redis() -> aioredis.Redis:
         socket_connect_timeout=5,
         socket_timeout=5,
     )
+
+
+@lru_cache(maxsize=1)
+def get_sync_cache_redis() -> sync_redis.Redis:
+    from app.core.settings import get_settings
+    settings = get_settings()
+    return sync_redis.Redis.from_url(
+        settings.redis_cache_url,
+        decode_responses=True,
+        socket_connect_timeout=5,
+        socket_timeout=5,
+    )
+
+
+def invalidate_tenant_query_cache_sync(tenant_id: str) -> int:
+    client = get_sync_cache_redis()
+    pattern = f"tenant:{tenant_id}:cache:query:*"
+    keys = list(client.scan_iter(match=pattern, count=100))
+    if keys:
+        client.delete(*keys)
+    return len(keys)
+
 
 class TenantRedis:
     def __init__(self, tenant_id: str):
@@ -42,6 +67,7 @@ class TenantRedis:
         key = self._key("session", session_id)
         raw = await self._redis.lrange(key, 0, -1)
         return [ json.loads(m) for m in raw ]
+
 
     async def append_message(
         self,
@@ -59,11 +85,13 @@ class TenantRedis:
         pipe.expire(key, ttl)
         await pipe.execute()
 
+
     async def clear_session(self, session_id: str) -> None:
         await self._redis.delete(self._key("session", session_id))
 
     async def get_query_cache(self, query_hash: str) -> str | None:
         return await self._cache.get(self._key("cache", "query", query_hash))
+
 
     async def set_query_cache(
         self,
@@ -76,12 +104,14 @@ class TenantRedis:
         key = self._key("cache", "query", query_hash)
         await self._cache.setex(key,  ttl or settings.cache_query_ttl_seconds,  response)
 
+
     async def invalidate_query_cache(self) -> int:
         pattern = self._key("cache", "query", "*")   #pattern e.g. tenant:abc123:cache:query:* per trovare tutte le cache query di questo tenant
         keys = await self._cache.keys(pattern)
         if keys:
             await self._cache.delete(*keys)
         return len(keys)
+
 
     async def check_rate_limit(
         self,
@@ -100,6 +130,7 @@ class TenantRedis:
         count = results[0]   #prendo solo il risultato di incr()
         return ( count<=max_requests, count )
 
+
     async def set_job_status(
         self,
         job_id: str,
@@ -112,6 +143,7 @@ class TenantRedis:
     async def get_job_status(self, job_id: str) -> dict | None:
         raw = await self._redis.get( self._key("job", job_id) )
         return json.loads(raw) if raw else None
+
 
     async def flush_tenant(self) -> int:
         pattern = f"tenant:{self.tenant_id}:*"
