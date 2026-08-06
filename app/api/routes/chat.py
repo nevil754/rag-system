@@ -12,6 +12,7 @@ from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
+
 @router.post("/query", response_model=ChatResponse)
 async def chat_query(
     request: ChatRequest,
