@@ -1,4 +1,5 @@
 from __future__ import annotations
+import time
 from loguru import logger
 from app.core.security import hash_password
 from app.core.vectorstore import ensure_collection
