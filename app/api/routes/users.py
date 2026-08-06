@@ -6,6 +6,8 @@ from uuid import uuid4
 from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.core.security import hash_password
 from app.core.settings import get_settings
+from loguru import logger
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 settings = get_settings()
