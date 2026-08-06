@@ -36,6 +36,8 @@ class ChatService:
         self.tenant_slug = tenant_slug
         self.user_id = user_id
 
+
+
     async def query(
         self,
         question: str,
@@ -87,7 +89,6 @@ class ChatService:
             tenant_name=self.tenant_slug,
         )
 
-
         validation = validate_answer(result["answer"], question)
         if validation.was_modified:
             result["answer"] = validation.answer
@@ -133,6 +134,7 @@ class ChatService:
             tokens_out=result.get("tokens_out", 0),
         )
         return response
+
 
     async def stream_query(
         self,
@@ -238,10 +240,8 @@ class ChatService:
         latency_ms: int = 0,
         hallucination_score: float | None = None,
     ) -> int:
-        
         # from app.core.settings import get_settings
         # settings = get_settings()
-
         async with tenant_db.aget_session(self.tenant_slug) as session:
             await session.execute(
                 text("""
@@ -278,6 +278,7 @@ class ChatService:
             )
             row = result.fetchone()
             return row[0] if row else 0
+
 
     async def _increment_usage_stats( self, tokens_in: int, tokens_out: int ) -> None:
         from datetime import date
