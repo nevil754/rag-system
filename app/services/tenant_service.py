@@ -17,10 +17,12 @@ async def provision_tenant(
 ) -> dict:
     
     start = time.perf_counter()
-    log = logger.bind(tenant_slug=slug, plan=plan)
+    log = logger.bind(tenant_slug=slug, plan=plan)   #crea new logger che contiene gia questi campi
+    log.warning("my3-tenant_service ARRIVATO FINO A DOPO bind()")
     log.info("Provisioning tenant: avvio", display_name=display_name, self_service=bool(owner_user_id))
 
     await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan, owner_user_id=owner_user_id, )  #execute function of tenant_db that came from sqlserver.py
+    logger.warning("my4-tenant_service ARRIVATO FINO A DOPO tenant_db.provision_tenant()")
     log.debug("Schema/tabelle tenant create su SQL Server")
     
     async with tenant_db.async_factory() as session:
