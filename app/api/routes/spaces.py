@@ -89,12 +89,14 @@ async def create_space(
             {"id": platform_user.platform_user_id}
         )
         owner = owner_row.fetchone()
+    logger.warning("my1-ARRIVATO FINO A OWNER_ROW")
     if not owner:
         logger.warning(
             "Creazione space fallita: account platform non trovato",
             platform_user_id=platform_user.platform_user_id,
         )
         raise HTTPException(status_code=404, detail="Account platform non trovato")
+    logger.warning("my2-ARRIVATO FINO A DOPO OWNER_ROW")
     logger.info(
         "Creazione nuovo space",
         platform_user_id=platform_user.platform_user_id,

@@ -18,7 +18,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.SKIP_PATHS:
             return await call_next(request)
         start = time.perf_counter()   #timer ad alta precisione
-        with logger.contextualize(    #add automatic context to all logs
+
+
+        with logger.contextualize(    #add automatic context to all logs, all i log eseguiti dentro quel blocco avranno automaticamente questi campi
             request_id=request_id,
             tenant_id=getattr(request.state, "tenant_id", None),
             user_id=getattr(request.state, "user_id", None),
@@ -49,6 +51,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 duration_ms=duration_ms,
             )
+
+
         response.headers["X-Request-ID"] = request_id
         return response
 
