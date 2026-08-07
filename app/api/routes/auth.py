@@ -145,22 +145,26 @@ async def platform_login(request: PlatformLoginRequest) -> PlatformTokenResponse
             """),
             {"email": request.email}
         )
+        logger.warning("my1LOG-arrivato dopo execute()")
         user = row.fetchone()
     if not user or not verify_password(request.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenziali non valide",
         )
+    logger.warning("my2LOG-arrivato dopo verify_password()")
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account disabilitato",
         )
+    logger.warning("my3LOG-arrivato prima di create_access_token()")
     token = create_access_token(data={
         "sub": str(user.id),
         "email": user.email,
         "is_platform": True,  
     })
+    logger.warning("my4LOG-arrivato dopo create_access_token()")
     logger.info("Login platform effettuato", platform_user_id=str(user.id))
     return PlatformTokenResponse(
         access_token=token,
