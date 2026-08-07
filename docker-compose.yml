@@ -12,7 +12,7 @@ services:
     ports:
       - "8000:8000"
     env_file: .env
-    environment:
+    environment:   #!!le vars arrivano all'interno di questo container SOLO PASSANDO attraverso questa door (OPPURE tramite env_file: .env, vedi here qua sopra)!! quindi ovviamente se in .env hai var MYVAR=xxx e poi qua in environment setti MYVAR=yyy allora sarà yyy.
       #REDIS_URL: "redis://redis:6379/0"  #DOVRESTI USARE PERO ok var gia settate in .env, quindi questo andrebbe commentato perche altrimenti il corretto REDIS_URL in .env sul server viene ignorato!
       SQLSERVER_HOST: "sqlserver"
       SQLSERVER_PORT: "1433"
