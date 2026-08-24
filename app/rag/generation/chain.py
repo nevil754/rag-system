@@ -34,6 +34,7 @@ async def arun_rag_chain(
             "tokens_in": 0,
             "tokens_out": 0,
             "latency_ms": 0,
+            "context": "",
         }
     ctx = build_rag_context(chunks, session_messages)
 
@@ -63,6 +64,7 @@ async def arun_rag_chain(
         "tokens_in": tokens_in,
         "tokens_out": tokens_out,
         "latency_ms": latency_ms,
+        "context": ctx["context"],
     }
 
 
@@ -71,7 +73,10 @@ async def astream_rag_chain(
     chunks: list[RetrievedChunk],
     session_messages: list[dict],
     tenant_name: str = "Compet-e Compliance AI",
-) -> AsyncGenerator[str, None]:
+) -> AsyncGenerator[tuple[str, Any], None]:
+    """Yielda tuple (kind, payload): ("token", str) per ogni pezzo di risposta, poi
+    esattamente un ("final", dict) con context/tokens_in/tokens_out prima di terminare —
+    canale strutturato invece di un carattere sentinella nel testo (vedi chat_service.py)."""
     logger.debug(
         "RAG chain streaming: avvio generazione",
         tenant=tenant_name,
@@ -80,7 +85,8 @@ async def astream_rag_chain(
     )
     if not chunks:
         logger.info("RAG chain streaming: nessun chunk rilevante, fallback senza LLM", tenant=tenant_name)
-        yield get_no_context_message()
+        yield ("token", get_no_context_message())
+        yield ("final", {"context": "", "tokens_in": 0, "tokens_out": 0})
         return
     ctx = build_rag_context(chunks, session_messages)
     system_msg = SystemMessage( content=get_rag_system_prompt(tenant_name) )   #SystemMessage(le istruzioni) è quello che è brother of HumanMessage(quello che chiede l'utente) e AIMessage(la risposta del modello)
@@ -90,9 +96,20 @@ async def astream_rag_chain(
         question=question,
     ))
     llm = get_llm()
+    accumulated = None
     async for chunk in llm.astream([system_msg, user_msg]):
         token = chunk.content
         if token:
-            yield token
+            yield ("token", token)
+        accumulated = chunk if accumulated is None else accumulated + chunk
+    # Non tutti i provider/versioni espongono usage_metadata in streaming (es. Ollama):
+    # in quel caso restano 0 invece di inventare un conteggio, ma almeno dove disponibile
+    # (OpenAI/Google) i token reali vengono tracciati anche sul canale streaming.
+    usage = getattr(accumulated, "usage_metadata", None) or {} if accumulated is not None else {}
+    yield ("final", {
+        "context": ctx["context"],
+        "tokens_in": usage.get("input_tokens", 0),
+        "tokens_out": usage.get("output_tokens", 0),
+    })
 
 

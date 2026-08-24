@@ -75,7 +75,7 @@ async def main():
         matches = sum( 1 for kw in expected if kw.lower() in answer_lower )
         keyword_score = matches / len(expected) if expected else 0.0
         from app.rag.generation.hallucination import check_faithfulness
-        faith_score = await check_faithfulness(question, answer, chunks)
+        faith_score = await check_faithfulness(question, answer, result.get("context", ""))
         combined_score = (keyword_score + faith_score) / 2
         total_score += combined_score
         print(f"   Keyword score: {keyword_score:.2f}")

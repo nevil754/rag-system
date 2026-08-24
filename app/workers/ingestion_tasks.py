@@ -160,6 +160,7 @@ def reprocess_document(
     document_id: str,
     file_path: str,
 ) -> dict:
+    from app.db.sqlserver import tenant_db
     from app.core.vectorstore import get_qdrant_client, get_collection_name
     from qdrant_client.http import models as qmodels
     client = get_qdrant_client()
@@ -180,6 +181,18 @@ def reprocess_document(
         args=[tenant_id, tenant_slug, document_id, file_path],
         queue="low",
     )
+    # Senza questa riga, ingest_document (che fa UPDATE ingestion_jobs SET status='running'
+    # WHERE document_id=:doc_id appena parte) avrebbe ritrovato/sovrascritto la riga
+    # dell'ingestion originale invece di tracciare questo nuovo tentativo separatamente.
+    from uuid import uuid4
+    with tenant_db.get_session(tenant_slug) as session:
+        session.execute(
+            text("""
+                INSERT INTO ingestion_jobs (id, document_id, status, celery_task_id)
+                VALUES (:id, :doc_id, 'queued', :task_id)
+            """),
+            {"id": str(uuid4()), "doc_id": document_id, "task_id": task.id}
+        )
     return {"status": "queued", "task_id": task.id, "document_id": document_id}
 
 

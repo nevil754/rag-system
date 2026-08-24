@@ -94,7 +94,7 @@ class ChatService:
             result["answer"] = validation.answer
             logger.debug("Risposta corretta dal validator", issues=validation.issues)
 
-        hall_score = await check_faithfulness(question, result["answer"], chunks)
+        hall_score = await check_faithfulness(question, result["answer"], result.get("context", ""))
         if is_hallucination(hall_score):
             logger.warning(
                 "Potenziale allucinazione rilevata",
@@ -127,6 +127,7 @@ class ChatService:
             "tokens_in": result.get("tokens_in"),
             "tokens_out": result.get("tokens_out"),
             "latency_ms": result.get("latency_ms"),
+            "hallucination_score": round(hall_score, 3),
         }
         await self.redis.set_query_cache( query_hash, json.dumps(response) )
         await self._increment_usage_stats(
@@ -141,7 +142,11 @@ class ChatService:
         question: str,
         conversation_id: str | None = None,
         collection_id: str | None = None,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[tuple[str, Any], None]:
+        """Yielda tuple (kind, payload): ("token", str) per ogni pezzo di risposta, poi
+        esattamente un ("meta", dict) prima di terminare. Canale strutturato — non più un
+        carattere sentinella (\\x1e) nel testo, che un token contenente per coincidenza
+        quello stesso carattere avrebbe rotto (interpretato come inizio dei metadata)."""
         conv_id = conversation_id or str(uuid4())
         query_hash = _hash_query(question, conv_id, collection_id)
         cached = await self.redis.get_query_cache(query_hash)
@@ -149,7 +154,7 @@ class ChatService:
             logger.debug("Cache hit per query RAG (streaming)")
             cached_data = json.loads(cached)
             cached_answer = cached_data.get("answer", "")
-            yield cached_answer
+            yield ("token", cached_answer)
 
             await self._save_messages(
                 conv_id=conv_id,
@@ -163,10 +168,11 @@ class ChatService:
             await self.redis.append_message(conv_id, {"role": "assistant", "content": cached_answer}, settings.memory_short_term_turns)
             await self._increment_usage_stats(tokens_in=0, tokens_out=0)
 
-            yield "\x1e" + json.dumps({
+            yield ("meta", {
                 "sources": cached_data.get("sources", []),
                 "conversation_id": conv_id,
                 "latency_ms": cached_data.get("latency_ms"),
+                "hallucination_score": cached_data.get("hallucination_score"),
                 "answer": cached_answer,
             })
             return
@@ -179,14 +185,22 @@ class ChatService:
         )
         start = time.time()
         full_answer = ""
-        async for token in astream_rag_chain(
+        context_used = ""
+        tokens_in = 0
+        tokens_out = 0
+        async for kind, payload in astream_rag_chain(
             question=question,
             chunks=chunks,
             session_messages=session_messages,
             tenant_name=self.tenant_slug,
         ):
-            full_answer += token
-            yield token
+            if kind == "token":
+                full_answer += payload
+                yield ("token", payload)
+            else:  # "final"
+                context_used = payload.get("context", "")
+                tokens_in = payload.get("tokens_in", 0)
+                tokens_out = payload.get("tokens_out", 0)
         latency_ms = round((time.time() - start) * 1000)
 
         validation = validate_answer(full_answer, question)
@@ -194,7 +208,7 @@ class ChatService:
             full_answer = validation.answer
             logger.debug("Risposta streaming corretta dal validator", issues=validation.issues)
 
-        hall_score = await check_faithfulness(question, full_answer, chunks)
+        hall_score = await check_faithfulness(question, full_answer, context_used)
         if is_hallucination(hall_score):
             logger.warning(
                 "Potenziale allucinazione rilevata (streaming)",
@@ -206,6 +220,8 @@ class ChatService:
             question=question,
             answer=full_answer,
             sources=format_sources_for_response(chunks),
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
             latency_ms=latency_ms,
             hallucination_score=hall_score,
         )
@@ -217,10 +233,13 @@ class ChatService:
             "conversation_id": conv_id,
             "sources": sources,
             "latency_ms": latency_ms,
+            "hallucination_score": round(hall_score, 3),
         }
         await self.redis.set_query_cache(query_hash, json.dumps(response_to_cache))   #ok attualmente non gli passo il ttl il time-to-live
-        await self._increment_usage_stats(tokens_in=0, tokens_out=0)   #tokens non disponibili in streaming (nessun conteggio token dal provider), ma queries_count deve comunque incrementare
-        yield "\x1e" + json.dumps({
+        # tokens_in/tokens_out reali quando il provider li espone in streaming (OpenAI/Google),
+        # 0 quando non disponibili (es. Ollama) — comunque non più sempre hardcoded a 0.
+        await self._increment_usage_stats(tokens_in=tokens_in, tokens_out=tokens_out)
+        yield ("meta", {
             "sources": sources,
             "conversation_id": conv_id,
             "latency_ms": latency_ms,

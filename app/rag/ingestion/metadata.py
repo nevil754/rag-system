@@ -20,9 +20,8 @@ def build_chunk_metadata(
     chunk_index: int,
     page_number: int | None,
     file_type: str,
-    document_text_sample: str = "",
+    doc_type: str,
 ) -> dict[str, Any]:
-    doc_type = _classify_document(document_text_sample, filename)
     metadata: dict[str, Any] = {
 
         "tenant_id": tenant_id,
@@ -40,7 +39,7 @@ def build_chunk_metadata(
     return metadata
 
 
-def _classify_document(text_sample: str, filename: str) -> str:
+def classify_document(text_sample: str, filename: str) -> str:
     cfg = get_metadata_config()
     doc_types = cfg.get("document_types", {})
     text_lower = ( text_sample + " " + filename ).lower()

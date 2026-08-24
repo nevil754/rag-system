@@ -18,6 +18,7 @@ class RAGState(TypedDict):
     web_results: dict | None
 
     answer: str
+    context: str
     sources: list[dict]
     tokens_in: int
     tokens_out: int

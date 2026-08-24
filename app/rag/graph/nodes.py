@@ -44,6 +44,7 @@ async def node_generate(state: RAGState) -> dict:
     )
     return {
         "answer": result["answer"],
+        "context": result.get("context", ""),
         "sources": result["sources"],
         "tokens_in": result.get("tokens_in", 0),
         "tokens_out": result.get("tokens_out", 0),
@@ -65,7 +66,7 @@ async def node_check_hallucination(state: RAGState) -> dict:
     score = await check_faithfulness(
         question=state["question"],
         answer=state.get("answer", ""),
-        chunks=state.get("retrieved_chunks", []),
+        context=state.get("context", ""),
     )
     return {"hallucination_score": score}
 

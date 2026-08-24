@@ -85,15 +85,15 @@ async def chat_stream(
     async def event_generator():
         meta: dict = {}
         try:
-            async for token in service.stream_query(
+            async for kind, payload in service.stream_query(
                 question=request.question,
                 conversation_id=request.conversation_id,
                 collection_id=request.collection_id,
             ):
-                if token.startswith("\x1e"):
-                    meta = json.loads(token[1:])
+                if kind == "meta":
+                    meta = payload
                 else:
-                    yield f"data: {json.dumps({'token': token})}\n\n"
+                    yield f"data: {json.dumps({'token': payload})}\n\n"
             yield f"data: {json.dumps({'done': True, **meta})}\n\n"
             logger.info(
                 "Chat stream completata",

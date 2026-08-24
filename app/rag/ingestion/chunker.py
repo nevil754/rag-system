@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 from dataclasses import dataclass, field
 from typing import Any
 from langchain.text_splitter import MarkdownTextSplitter, RecursiveCharacterTextSplitter
@@ -61,9 +62,25 @@ def chunk_document(
     return chunks
 
 
+_MARKDOWN_NOISE_RE = re.compile(r"[#*_`|>-]")
+
+
+def _normalize_for_page_match(text: str) -> str:
+    # text va cucito dal markdown export di Docling (usato per i chunk), pages dal testo
+    # grezzo per-elemento (usato per il lookup pagina): sintassi markdown (#, **, |, ecc.)
+    # presente solo nel primo e assente nel secondo faceva fallire quasi sempre il substring
+    # match. Rimuovendo questi caratteri e normalizzando gli spazi su entrambi i lati, il
+    # confronto avviene sullo stesso "testo nudo".
+    text = _MARKDOWN_NOISE_RE.sub("", text)
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
 def _find_page_number( chunk_text: str, pages: list[str] ) -> int | None:
+    probe = _normalize_for_page_match(chunk_text)[:80]
+    if not probe:
+        return None
     for i, page_text in enumerate(pages, 1):
-        if chunk_text[:100] in page_text:
+        if probe in _normalize_for_page_match(page_text):
             return i
     return None
 

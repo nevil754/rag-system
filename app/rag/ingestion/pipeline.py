@@ -7,7 +7,7 @@ from loguru import logger
 from app.rag.ingestion.parser import parse_document
 from app.rag.ingestion.cleaner import clean_text
 from app.rag.ingestion.chunker import chunk_document
-from app.rag.ingestion.metadata import build_chunk_metadata
+from app.rag.ingestion.metadata import build_chunk_metadata, classify_document
 from app.core.embeddings import embed_texts
 from app.core.vectorstore import get_qdrant_client, get_collection_name, ensure_collection
 from app.core.settings import get_settings
@@ -53,9 +53,15 @@ def run_ingestion_pipeline(
         logger.debug( f"Sparse embedding: {len(sparse_vectors)} vettori generati" )
     else:
         sparse_vectors = [None] * len(vectors)
-    collection_name = ensure_collection( tenant_slug, settings.qdrant_force_recreate )
+    # force_recreate NON va mai propagato qui: questa funzione gira ad ogni singolo upload,
+    # e un client Qdrant con settings.qdrant_force_recreate=True cancellerebbe l'intera
+    # collection del tenant (tutti i documenti già ingeriti) al primo upload successivo.
+    # ensure_collection senza force_recreate resta idempotente: crea solo se non esiste.
+    collection_name = ensure_collection( tenant_slug )
     client = get_qdrant_client()
     from qdrant_client.http import models as qmodels
+    # Classificato una volta per documento (era ripetuto identico per ogni chunk).
+    doc_type = classify_document(clean[:500], filename)
     points = []
     for chunk, vector, sparse_vec in zip( chunks, vectors, sparse_vectors ):
         payload = build_chunk_metadata(
@@ -66,7 +72,7 @@ def run_ingestion_pipeline(
             chunk_index=chunk.chunk_index,
             page_number=chunk.page_number,
             file_type=file_type,
-            document_text_sample=clean[:500],
+            doc_type=doc_type,
         )
         payload["text"] = chunk.text
         vector_dict: dict = {"dense": vector}

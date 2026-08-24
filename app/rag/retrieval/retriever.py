@@ -67,17 +67,25 @@ async def retrieve(
             )
     qdrant_filter = qmodels.Filter(must=must_conditions)
 
-    dense_results = await client.search(
-        collection_name=collection_name,
-        query_vector=qmodels.NamedVector(name="dense", vector=query_vector),
-        query_filter=qdrant_filter,
-        limit=k,
-        with_payload=True,
-        score_threshold=0.3,
-    )
+    # settings.retriever_search_type ("dense" | "sparse" | "hybrid") era definito ma mai
+    # letto qui: il comportamento reale era controllato solo da qdrant_use_sparse (che in
+    # realtà indica solo se la collection HA vettori sparse indicizzati, non la strategia di
+    # query). Ora search_type sceglie davvero quali rami eseguire a runtime.
+    search_type = settings.retriever_search_type
+
+    dense_results = []
+    if search_type in ("hybrid", "dense"):
+        dense_results = await client.search(
+            collection_name=collection_name,
+            query_vector=qmodels.NamedVector(name="dense", vector=query_vector),
+            query_filter=qdrant_filter,
+            limit=k,
+            with_payload=True,
+            score_threshold=0.3,
+        )
 
     sparse_results = []
-    if settings.qdrant_use_sparse:
+    if settings.qdrant_use_sparse and search_type in ("hybrid", "sparse"):
         try:
             from app.core.embeddings import aembed_sparse_query
             sparse_vector = await aembed_sparse_query(query)

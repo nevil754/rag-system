@@ -1,16 +1,17 @@
 from __future__ import annotations
 from loguru import logger
-from app.rag.retrieval.retriever import RetrievedChunk
 
 
 async def check_faithfulness(
     question: str,
     answer: str,
-    chunks: list[RetrievedChunk],
+    context: str,
 ) -> float:
-    if not chunks or not answer:
+    # `context` deve essere lo stesso testo effettivamente mostrato al LLM in generazione
+    # (build_rag_context()["context"]), non una selezione indipendente dei chunk: altrimenti
+    # il check valuta contro un contesto diverso da quello che ha davvero prodotto la risposta.
+    if not context or not answer:
         return 1.0
-    context = "\n\n".join(c.text for c in chunks[:5])
     try:
         from app.core.llm_factory import get_llm
         from langchain_core.messages import HumanMessage
@@ -32,8 +33,11 @@ async def check_faithfulness(
         logger.debug(f"Hallucination score: {score:.2f}")
         return score
     except Exception as e:
+        # Default prudente: un check anti-allucinazione che fallisce non deve dichiarare
+        # "massima fedeltà" (1.0), altrimenti disattiva silenziosamente la protezione
+        # proprio quando è meno affidabile (es. LLM che non risponde con un numero puro).
         logger.warning(f"Hallucination check fallito: {e}")
-        return 1.0
+        return 0.0
 
 
 def is_hallucination(score: float, threshold: float = 0.5) -> bool:
