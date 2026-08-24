@@ -102,7 +102,7 @@ class TenantDB:
                 f"Eseguire sp_provision_tenant prima."
             )
         user_name = _slug_to_user(tenant_slug)
-        session.execute(text(f"EXECUTE AS USER = N'{user_name}'"))
+        session.execute(text("EXECUTE AS USER = :user_name"), {"user_name": user_name})
 
     async def _set_schema_async(
         self, session: AsyncSession, tenant_slug: str
@@ -117,7 +117,7 @@ class TenantDB:
                 f"Schema tenant '{schema_name}' non trovato."
             )
         user_name = _slug_to_user(tenant_slug)
-        await session.execute(text(f"EXECUTE AS USER = N'{user_name}'"))
+        await session.execute(text("EXECUTE AS USER = :user_name"), {"user_name": user_name})
 
 
     async def provision_tenant(

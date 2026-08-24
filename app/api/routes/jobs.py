@@ -1,5 +1,6 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
+from loguru import logger
 from sqlalchemy import text
 from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.schemas.common import PaginatedResponse

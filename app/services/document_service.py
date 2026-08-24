@@ -91,7 +91,7 @@ class DocumentService:
                 headers={"tenant_id": self.tenant_id},    #sets x this celery task
             )
             job_id = str(uuid4())
-            try: 
+            try:
                 await self.db.execute(
                     text("""
                         INSERT INTO ingestion_jobs (id, document_id, status, celery_task_id)
@@ -99,6 +99,11 @@ class DocumentService:
                     """),
                     {"id": job_id, "doc_id": document_id, "task_id": task.id}
                 )
+                # Commit esplicito: il task Celery (countdown=3s) fa UPDATE su documents/
+                # ingestion_jobs appena parte, e non deve trovare le righe non ancora committate
+                # (il commit "automatico" di fine request, in app/api/deps.py, potrebbe arrivare tardi
+                # sotto carico/lock contention).
+                await self.db.commit()
             except Exception as job_exc:
                 from app.workers.celery_app import celery_app
                 celery_app.control.revoke(task.id, terminate=False)

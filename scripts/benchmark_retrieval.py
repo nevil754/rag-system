@@ -35,7 +35,7 @@ async def main():
     from app.db.sqlserver import tenant_db
     from sqlalchemy import text
 
-    async with tenant_db._async_factory() as session:
+    async with tenant_db.async_factory() as session:
         row = await session.execute(
             text("SELECT id FROM shared.tenants WHERE slug = :slug"),
             {"slug": args.tenant}
@@ -57,7 +57,7 @@ async def main():
         question = item["question"]
         expected = item["expected_keywords"]
         print(f"\nQ: {question}")
-        chunks = retrieve(
+        chunks = await retrieve(
             query=question,
             tenant_slug=args.tenant,
             tenant_id=tenant_id,
