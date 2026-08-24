@@ -123,6 +123,12 @@ class AppSettings(BaseSettings):
     log_console_output: bool = True
     log_colored: bool = True
     log_json_output: bool = False
+    log_file_enabled: bool = False
+    log_file_path: str = "/app/logs/rag-{time:YYYY-MM-DD}.log"
+    log_file_rotation: str = "00:00"
+    log_file_retention: str = "30 days"
+    log_file_compression: str = "gz"
+    log_file_level: str = "DEBUG"
 
     web_search_enabled: bool = False
     web_search_provider: str = "tavily"
@@ -185,6 +191,12 @@ def _apply_yaml_overrides() -> None:
         ("reranker.top_k",          "RERANKER_TOP_K"),
         ("logging.level",           "LOG_LEVEL"),
         ("logging.json_output",     "LOG_JSON_OUTPUT"),
+        ("logging.file.enabled",     "LOG_FILE_ENABLED"),
+        ("logging.file.path",        "LOG_FILE_PATH"),
+        ("logging.file.rotation",    "LOG_FILE_ROTATION"),
+        ("logging.file.retention",   "LOG_FILE_RETENTION"),
+        ("logging.file.compression", "LOG_FILE_COMPRESSION"),
+        ("logging.file.level",       "LOG_FILE_LEVEL"),
         ("observability.langsmith_enabled", "LANGSMITH_ENABLED"),
         ("memory.short_term_turns", "MEMORY_SHORT_TERM_TURNS"),
         ("memory.long_term_enabled","MEMORY_LONG_TERM_ENABLED"),

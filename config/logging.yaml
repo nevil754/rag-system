@@ -16,7 +16,7 @@ logging:
       - "extra"
 
   file:
-    enabled: false
+    enabled: true
     path: "/app/logs/rag-{time:YYYY-MM-DD}.log"
     rotation: "00:00"
     retention: "30 days"

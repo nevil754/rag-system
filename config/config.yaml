@@ -79,11 +79,18 @@ web_search:
 
   
 
-logging: 
+logging:
   level: "INFO"
   console_output: true
   colored: true
   json_output: false
+  file:
+    enabled: true
+    path: "/app/logs/rag-{time:YYYY-MM-DD}.log"
+    rotation: "00:00"
+    retention: "30 days"
+    compression: "gz"
+    level: "DEBUG"
 
 observability:
   langsmith_enabled: false

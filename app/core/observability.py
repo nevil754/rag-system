@@ -57,11 +57,28 @@ def setup_logging(settings: "AppSettings") -> None:
         # else:
         #     logger.add(sys.stdout, level=level, format=fmt, colorize=False)
 
+    if settings.log_file_enabled:
+        from pathlib import Path
+        Path(settings.log_file_path).parent.mkdir(parents=True, exist_ok=True)
+        logger.add(
+            settings.log_file_path,
+            level=settings.log_file_level.upper(),
+            format=_console_format,
+            colorize=False,
+            rotation=settings.log_file_rotation,
+            retention=settings.log_file_retention,
+            compression=settings.log_file_compression,
+            enqueue=True,
+            backtrace=False,
+            diagnose=False,
+        )
+
     _intercept_stdlib_logging()
     logger.info(
         "Logging configurato",
         level=level,
         json=settings.log_json_output,
+        file=settings.log_file_enabled,
         env=settings.app_environment,
     )
 
