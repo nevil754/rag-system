@@ -154,30 +154,30 @@ services:
     networks:
       - rag-network
 
-
-  chainlit:
-    build:
-      context: .
-      dockerfile: docker/chainlit.Dockerfile
-    #container_name: chainlit
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    env_file: .env
-    environment:
-      FASTAPI_URL: "http://fastapi:8000"
-      CHAINLIT_DEFAULT_TENANT: "${CHAINLIT_DEFAULT_TENANT:-demo-corp}"
-    depends_on:
-      fastapi:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"] #["CMD", "curl", "-f", "http://localhost:8080/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-    networks:
-      - rag-network
+  # OLD
+  # chainlit:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/chainlit.Dockerfile
+  #   #container_name: chainlit
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   env_file: .env
+  #   environment:
+  #     FASTAPI_URL: "http://fastapi:8000"
+  #     CHAINLIT_DEFAULT_TENANT: "${CHAINLIT_DEFAULT_TENANT:-demo-corp}"
+  #   depends_on:
+  #     fastapi:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"] #["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 15s
+  #   networks:
+  #     - rag-network
 
 
   qdrant:

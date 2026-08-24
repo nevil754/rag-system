@@ -30,12 +30,29 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
     loop.close()
     log.info("Purge tenant: chiavi Redis cancellate", redis_keys_deleted=deleted_keys)
 
-    schema_name = "tenant_" + tenant_slug.replace("-", "_")
+    schema_name = "tenant_" + tenant_slug.replace("-", "_").lower()   #.lower() coerente con _slug_to_schema() in app/db/sqlserver.py
     with tenant_db.sync_factory() as session:
         session.execute(
             text("UPDATE shared.tenants SET is_active = 0 WHERE slug = :slug"),
             {"slug": tenant_slug}
         )
+        # DROP SCHEMA fallisce sempre se lo schema contiene ancora oggetti (SQL Server non
+        # ha un DROP SCHEMA ... CASCADE) — e lo schema di un tenant ha sempre almeno le
+        # tabelle create da shared.sp_provision_tenant. Le droppiamo prima tutte (nessuna FK
+        # tra loro, verificato in docker/sqlserver/init.sql), poi l'utente dedicato, poi lo
+        # schema stesso — stesso pattern di SQL dinamico già usato in sp_provision_tenant.
+        session.execute(text(f"""
+            DECLARE @sql NVARCHAR(MAX) = N'';
+            SELECT @sql = @sql + N'DROP TABLE [{schema_name}].[' + t.name + N'];' + CHAR(13)
+            FROM sys.tables t
+            JOIN sys.schemas s ON t.schema_id = s.schema_id
+            WHERE s.name = N'{schema_name}';
+            IF @sql <> N'' EXEC sp_executesql @sql;
+        """))
+        session.execute(text(f"""
+            IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'usr_{schema_name}')
+                DROP USER [usr_{schema_name}];
+        """))
         session.execute(text(f"DROP SCHEMA IF EXISTS [{schema_name}]"))
         session.commit()
 
