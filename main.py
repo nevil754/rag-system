@@ -1,9 +1,11 @@
 from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
+from sqlalchemy.exc import IntegrityError
 from app.core.observability import setup_all
 from app.core.settings import get_settings
 
@@ -46,6 +48,17 @@ def create_app() -> FastAPI:
 
         lifespan=lifespan,
     )
+
+    @app.exception_handler(IntegrityError)
+    async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+        # Copre i vincoli UNIQUE violati (slug/email/qdrant_name duplicati, ecc.): senza questo
+        # handler ogni route che fa un INSERT senza pre-check di unicità (create_tenant,
+        # create_user, create_collection) rispondeva con un 500 grezzo invece di un 409.
+        logger.warning(f"IntegrityError su {request.method} {request.url.path}: {exc}")
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Conflitto: risorsa già esistente o vincolo di unicità violato"},
+        )
 
     app.add_middleware(
         CORSMiddleware,

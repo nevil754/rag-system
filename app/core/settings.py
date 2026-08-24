@@ -135,6 +135,7 @@ class AppSettings(BaseSettings):
     web_search_max_results: int = 5
     tavily_api_key: str = ""
     metadata_config_file: str = "/app/config/metadata.yaml"
+    prompts_config_file: str = "/app/config/prompts.yaml"
 
     celery_broker_url: str = "redis://redis:6379/0"
     celery_result_backend: str = "redis://redis:6379/0"

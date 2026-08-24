@@ -78,10 +78,12 @@ async def list_users( tenant: AdminOnly, db: CurrentDB ) -> list[UserSchema]:
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def deactivate_user(user_id: str, tenant: AdminOnly, db: CurrentDB) -> None:
-    await db.execute(
+    result = await db.execute(
         text("UPDATE users SET is_active = 0 WHERE id = :id"),
         {"id": user_id}
     )
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
     logger.info(
         "Utente disattivato",
         tenant_id=tenant.tenant_id, deactivated_by=tenant.user_id, user_id=user_id,

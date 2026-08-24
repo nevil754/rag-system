@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 import yaml
 from loguru import logger
+from app.core.settings import get_settings
 
 
 def get_rag_system_prompt(tenant_name: str = "Compet-e Compliance AI") -> str:
@@ -33,7 +34,7 @@ def get_no_context_message() -> str:
 
 @lru_cache(maxsize=1)
 def _load_prompts() -> dict:
-    prompt_file = Path("/app/config/prompts.yaml")
+    prompt_file = Path(get_settings().prompts_config_file)
     if not prompt_file.exists():
         logger.warning("prompts.yaml non trovato, uso prompt hardcodati")
         return {}

@@ -72,10 +72,12 @@ async def disable_tenant(slug: str, platform_user: SuperAdminOnly) -> dict:
     #_require_superadmin(tenant)
     from app.db.sqlserver import tenant_db
     async with tenant_db.async_factory() as session:
-        await session.execute(
+        result = await session.execute(
             text("UPDATE shared.tenants SET is_active = 0 WHERE slug = :slug"),
             {"slug": slug}
         )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail=f"Tenant '{slug}' non trovato")
         await session.commit()
     logger.warning(
         "Tenant disabilitato (superadmin)",

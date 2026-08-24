@@ -179,6 +179,33 @@ async def platform_login(request: PlatformLoginRequest) -> PlatformTokenResponse
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(tenant: CurrentTenant) -> TokenResponse:
+    # Il JWT in ingresso è fidato ciecamente da TenantMiddleware/get_current_tenant, quindi
+    # senza questo ricontrollo un utente/tenant disabilitato dopo l'emissione del token
+    # avrebbe potuto rinnovarlo all'infinito senza mai ripassare dal DB.
+    async with tenant_db.async_factory() as session:
+        tenant_row = await session.execute(
+            text("SELECT is_active FROM shared.tenants WHERE id = :id"),
+            {"id": tenant.tenant_id}
+        )
+        tenant_row_data = tenant_row.fetchone()
+    if not tenant_row_data or not tenant_row_data.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account tenant disabilitato",
+        )
+
+    async with tenant_db.aget_session(tenant.tenant_slug) as session:
+        user_row = await session.execute(
+            text("SELECT is_active FROM users WHERE id = :id"),
+            {"id": tenant.user_id}
+        )
+        user_row_data = user_row.fetchone()
+    if not user_row_data or not user_row_data.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account utente disabilitato",
+        )
+
     new_token = create_access_token(data={
         "sub": tenant.user_id,
         "email": tenant.user_email,

@@ -76,12 +76,49 @@ async def delete_collection(
     tenant: AdminOnly,   #fa il check in deps.py self.user_role == "admin" quindi true/false e se è false allora Error 403
     db: CurrentDB,
 ) -> None:
+    row = await db.execute(
+        text("SELECT id FROM collections WHERE id = :id AND is_active = 1"),
+        {"id": collection_id}
+    )
+    if not row.fetchone():
+        raise HTTPException(status_code=404, detail="Collection non trovata")
+
+    # Senza cascata, i documenti restavano `status != 'deleted'` (visibili in GET /documents e
+    # ricercabili in RAG) e i loro vettori restavano vivi su Qdrant anche dopo l'eliminazione
+    # della collection — stessa cautela già applicata in delete_document (documents.py).
+    from app.core.vectorstore import get_async_qdrant_client, get_collection_name
+    from qdrant_client.http import models as qmodels
+    client = get_async_qdrant_client()
+    qdrant_collection = get_collection_name(tenant.tenant_slug)
+    try:
+        await client.delete(
+            collection_name=qdrant_collection,
+            points_selector=qmodels.FilterSelector(
+                filter=qmodels.Filter(
+                    must=[ qmodels.FieldCondition(
+                        key="collection_id",
+                        match=qmodels.MatchValue(value=collection_id)
+                    ) ]
+                )
+            )
+        )
+    except Exception as e:
+        logger.error(f"Errore cancellazione vettori Qdrant per collection {collection_id}: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail="Impossibile cancellare i vettori della collection su Qdrant; la collection non è stata eliminata. Riprova.",
+        )
+
+    await db.execute(
+        text("UPDATE documents SET status = 'deleted', updated_at = SYSUTCDATETIME() WHERE collection_id = :id AND status != 'deleted'"),
+        {"id": collection_id}
+    )
     await db.execute(
         text("UPDATE collections SET is_active = 0 WHERE id = :id"),
         {"id": collection_id}
     )
     logger.info(
-        "Collection eliminata (soft-delete)",
+        "Collection eliminata (soft-delete, cascata su documenti e vettori Qdrant)",
         tenant_id=tenant.tenant_id, deleted_by=tenant.user_id, collection_id=collection_id,
     )
 
