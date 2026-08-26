@@ -43,6 +43,7 @@ class PlatformTokenResponse(BaseModel):
     expires_in: int
     platform_user_id: str
     email: str
+    is_superadmin: bool = False
 
 
 class UserProfile(BaseModel):
@@ -139,7 +140,7 @@ async def platform_login(request: PlatformLoginRequest) -> PlatformTokenResponse
     async with tenant_db.async_factory() as session:
         row = await session.execute(
             text("""
-                SELECT id, email, password_hash, is_active
+                SELECT id, email, password_hash, is_active, is_superadmin
                 FROM shared.platform_users
                 WHERE email = :email
             """),
@@ -160,13 +161,15 @@ async def platform_login(request: PlatformLoginRequest) -> PlatformTokenResponse
         "sub": str(user.id),
         "email": user.email,
         "is_platform": True,
+        "is_superadmin": bool(user.is_superadmin),
     })
-    logger.info("Login platform effettuato", platform_user_id=str(user.id))
+    logger.info("Login platform effettuato", platform_user_id=str(user.id), is_superadmin=bool(user.is_superadmin))
     return PlatformTokenResponse(
         access_token=token,
         expires_in=settings.jwt_expire_minutes * 60,
         platform_user_id=str(user.id),
         email=user.email,
+        is_superadmin=bool(user.is_superadmin),
     )
 
 
