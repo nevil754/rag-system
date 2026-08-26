@@ -63,8 +63,15 @@ class TenantDB:
                 try:
                     session.execute(text("REVERT"))
                     session.commit()
-                except Exception:
-                    pass
+                except Exception as e:
+                    # EXECUTE AS vive sulla connessione fisica, non sulla transazione: un
+                    # REVERT fallito la rimanderebbe nel pool ancora impersonata come utente
+                    # ristretto del tenant, e la prossima richiesta qualsiasi che la pesca dal
+                    # pool (anche non-tenant, es. platform-login su shared.*) erediterebbe
+                    # quel contesto e fallirebbe con "permission denied". Invalidarla forza il
+                    # pool a scartarla invece di riusarla.
+                    logger.error(f"REVERT fallito, invalido la connessione: {e}", tenant_slug=tenant_slug)
+                    session.invalidate()
             session.close()
 
     @asynccontextmanager
@@ -86,8 +93,13 @@ class TenantDB:
                     try:
                         await session.execute(text("REVERT"))   #se era stato fatto e.g.EXECUTE AS USER = 'tenant_acme', ora con questo invece torni all'user origine e.g. AppLogin
                         await session.commit()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        # vedi commento nella versione sync (get_session) qui sopra: REVERT
+                        # fallito → connessione ancora impersonata → va invalidata, non
+                        # rimandata nel pool, altrimenti "avvelena" la prossima richiesta
+                        # qualsiasi che la riceve in checkout dal pool.
+                        logger.error(f"REVERT fallito, invalido la connessione: {e}", tenant_slug=tenant_slug)
+                        await session.invalidate()
 
 
     def _set_schema_sync(self, session: Session, tenant_slug: str) -> None:
