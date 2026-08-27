@@ -186,6 +186,27 @@ def _slug_to_schema(slug: str) -> str:
 def _slug_to_user(slug: str) -> str:
     return "usr_" + _slug_to_schema(slug)
 
+
+def _revert_impersonation_on_checkin(dbapi_connection, connection_record) -> None:
+    # Le sessioni tenant-scoped (get_session/aget_session) fanno EXECUTE AS USER su un
+    # utente ristretto del tenant e poi REVERT a fine richiesta. Se quel REVERT non va a
+    # buon fine (eccezione non propagata fin qui, richiesta cancellata a metà, ecc.) la
+    # connessione fisica torna nel pool ancora impersonata: una richiesta successiva
+    # completamente scollegata (es. shared.* via async_factory() nudo) la ripescherebbe
+    # dal pool ereditando quel contesto ristretto e fallirebbe con "permission denied" su
+    # oggetti shared.* (vedi bug 2026-08-27 su POST /api/v1/spaces). Prima che una
+    # connessione rientri nel pool, tenta comunque un REVERT: no-op se non c'era nulla da
+    # revertire, altrimenti scarta la connessione invece di rimetterla in circolo.
+    try:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("BEGIN TRY REVERT; END TRY BEGIN CATCH END CATCH")
+        dbapi_connection.commit()
+        cursor.close()
+    except Exception as e:
+        logger.error(f"Reset impersonazione fallito al checkin, scarto la connessione: {e}")
+        connection_record.invalidate()
+
+
 @lru_cache(maxsize=1)
 def get_sync_engine():
     from app.core.settings import get_settings
@@ -198,6 +219,7 @@ def get_sync_engine():
         pool_recycle=3600,   #ricicla le connessioni dopo 3600 secondi (1 ora) per evitare timeout
         echo=False  #settings.app_debug. cosi attualmente non ho il doppio log 1 x loguru 1 x sqlalchemy
     )
+    event.listen(engine, "checkin", _revert_impersonation_on_checkin)
     logger.info("Engine SQL Server sincrono creato")
     return engine
 
@@ -217,6 +239,10 @@ def get_async_engine():
         pool_recycle=3600,
         echo=False  #settings.app_debug,
     )
+    # gli eventi del pool si registrano sul sync_engine sottostante: asyncio non ha un
+    # equivalente nativo del pool di SQLAlchemy, quindi il pooling (e i suoi eventi)
+    # avviene comunque a livello sincrono anche per un AsyncEngine.
+    event.listen(engine.sync_engine, "checkin", _revert_impersonation_on_checkin)
     logger.info("Engine SQL Server asincrono creato")
     return engine
 

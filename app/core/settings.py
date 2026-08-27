@@ -57,6 +57,9 @@ class AppSettings(BaseSettings):
     qdrant_distance: str = "COSINE"
     qdrant_on_disk_payload: bool = True
 
+    superadmin_email: str = ""
+    superadmin_password: str = ""
+
     sqlserver_host: str = "sqlserver"
     sqlserver_port: int = 1433
     sqlserver_db: str = "RAGChat"

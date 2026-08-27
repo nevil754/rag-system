@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Environment {settings.app_environment}")
     setup_all(settings)
     await _check_services()
+    await _seed_superadmin()
     if settings.app_environment != "development":
         await _preload_models()
     logger.info("Startup completato, app pronta")
@@ -123,6 +124,40 @@ async def _check_services() -> None:
         logger.info("Qdrant: connesso")
     except Exception as e:
         logger.warning(f"Qdrant non raggiungibile all'avvio: {e}")
+
+async def _seed_superadmin() -> None:
+    # Prima il superadmin (admin@platform.competesrl.it) veniva creato da un INSERT con
+    # email/hash fissi dentro docker/sqlserver/init.sql, versionato nel repo. Ora le
+    # credenziali vive solo come env var sul server (mai committate) e il seed idempotente
+    # avviene qui, al primo avvio in cui shared.platform_users non ha ancora quella riga.
+    if not settings.superadmin_email or not settings.superadmin_password:
+        logger.warning(
+            "SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD non impostate: nessun superadmin creato"
+        )
+        return
+    from sqlalchemy import text
+    from app.core.security import hash_password
+    from app.db.sqlserver import tenant_db
+    async with tenant_db.async_factory() as session:
+        existing = await session.execute(
+            text("SELECT 1 FROM shared.platform_users WHERE email = :email"),
+            {"email": settings.superadmin_email},
+        )
+        if existing.fetchone():
+            return
+        await session.execute(
+            text("""
+                INSERT INTO shared.platform_users (email, full_name, password_hash, is_superadmin)
+                VALUES (:email, 'Platform Admin', :pwd_hash, 1)
+            """),
+            {
+                "email": settings.superadmin_email,
+                "pwd_hash": hash_password(settings.superadmin_password),
+            },
+        )
+        await session.commit()
+    logger.info("Superadmin creato", email=settings.superadmin_email)
+
 
 async def _preload_models() -> None:
     try:
