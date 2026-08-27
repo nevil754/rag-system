@@ -1,19 +1,19 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 from app.api.deps import SuperAdminOnly
-from app.services.tenant_service import provision_tenant
+from app.core.settings import get_settings
+from app.services.tenant_service import generate_unique_slug, provision_tenant
 
-
+settings = get_settings()
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
 class TenantCreate(BaseModel):
-    slug: str
     display_name: str
     plan: str = "starter"
-    admin_email: str | None = None
+    admin_email: EmailStr | None = None
     admin_password: str | None = None
 
 class TenantResponse(BaseModel):
@@ -36,14 +36,23 @@ async def create_tenant(
     platform_user: SuperAdminOnly,
 ) -> TenantResponse:
     #_require_superadmin(tenant)
+    if body.admin_password is not None and len(body.admin_password) < settings.password_min_length:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Password troppo corta (min {settings.password_min_length} caratteri)"
+        )
+    try:
+        slug = await generate_unique_slug(body.display_name)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     logger.info(
         "Creazione tenant via /tenants (superadmin)",
         superadmin_id=platform_user.platform_user_id,
-        slug=body.slug,
+        slug=slug,
         plan=body.plan,
     )
     result = await provision_tenant(
-        slug=body.slug,
+        slug=slug,
         display_name=body.display_name,
         plan=body.plan,
         admin_email=body.admin_email,

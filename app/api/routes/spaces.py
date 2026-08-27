@@ -1,10 +1,8 @@
 from __future__ import annotations
-import secrets
 from datetime import datetime
 from loguru import logger
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from slugify import slugify
 from sqlalchemy import text
 
 from app.api.deps import CurrentPlatformUser
@@ -12,7 +10,7 @@ from app.api.routes.auth import TokenResponse
 from app.core.security import create_access_token
 from app.core.settings import get_settings
 from app.db.sqlserver import tenant_db
-from app.services.tenant_service import provision_tenant
+from app.services.tenant_service import generate_unique_slug, provision_tenant
 
 router = APIRouter(prefix="/spaces", tags=["spaces"])
 settings = get_settings()
@@ -71,19 +69,11 @@ async def create_space(
     body: SpaceCreate,
     platform_user: CurrentPlatformUser,
 ) -> SpaceSchema:
-    base_slug = slugify(body.name) or "space"
-    slug = base_slug
+    try:
+        slug = await generate_unique_slug(body.name)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     async with tenant_db.async_factory() as session:
-        for _ in range(5):   #5 cycles
-            existing = await session.execute(
-                text("SELECT 1 FROM shared.tenants WHERE slug = :slug"),
-                {"slug": slug}
-            )
-            if not existing.fetchone():
-                break
-            slug = f"{base_slug}-{secrets.token_hex(3)}"  #secrets.token_hex(3) random text string in hexadecimal format containing 3 random bytes so it's 6 characters long (e.g. 'a1b2c3')
-        else:
-            raise HTTPException( status_code=409, detail="Impossibile generare uno slug univoco" )
         owner_row = await session.execute(
             text("SELECT email, password_hash FROM shared.platform_users WHERE id = :id"),
             {"id": platform_user.platform_user_id}

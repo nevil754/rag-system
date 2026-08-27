@@ -1,10 +1,30 @@
 from __future__ import annotations
+import secrets
 import time
 from loguru import logger
+from slugify import slugify
 from app.core.security import hash_password
 from app.core.vectorstore import ensure_collection
 from app.db.sqlserver import tenant_db
 from sqlalchemy import text
+
+
+async def generate_unique_slug(name: str) -> str:
+    # Stessa logica usata da POST /spaces (self-service): riusata anche da POST /tenants
+    # (superadmin) cosi lo slug si genera sempre allo stesso modo, invece di farselo
+    # scrivere a mano da chi crea l'ufficio.
+    base_slug = slugify(name) or "space"
+    slug = base_slug
+    async with tenant_db.async_factory() as session:
+        for _ in range(5):
+            existing = await session.execute(
+                text("SELECT 1 FROM shared.tenants WHERE slug = :slug"),
+                {"slug": slug}
+            )
+            if not existing.fetchone():
+                return slug
+            slug = f"{base_slug}-{secrets.token_hex(3)}"
+    raise ValueError("Impossibile generare uno slug univoco")
 
 
 async def provision_tenant(
