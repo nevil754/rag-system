@@ -131,13 +131,16 @@ CREATE TABLE shared.api_keys (
 GO
 
 
-
-
--- Il seed del platform_user superadmin NON è più qui: email e password erano scritte in
--- chiaro/hash fisso in questo script versionato. Ora viene creato all'avvio dell'app
--- (main.py, vedi _seed_superadmin) leggendo SUPERADMIN_EMAIL e SUPERADMIN_PASSWORD da env,
--- cosi le credenziali reali non finiscono mai nel repo.
-
+-- Il seed del platform_user superadmin NON è più qui: email e password erano scritte in chiaro/hash fisso in questo script versionato. Ora viene creato all'avvio dell'app (main.py, vedi _seed_superadmin) leggendo SUPERADMIN_EMAIL e SUPERADMIN_PASSWORD da env.
+-- IF NOT EXISTS (SELECT 1 FROM shared.platform_users WHERE email = 'admin@platform.competesrl.it')
+--     INSERT INTO shared.platform_users (email, full_name, password_hash, is_superadmin)
+--     VALUES (
+--         'admin@platform.competesrl.it',
+--         'Platform Admin',
+--         '$2b$12$SBT65yjDI0Z4fniKLfaYKe/W3I.dU1UiELRk01anItj6s9hxlWlBe',
+--         1
+--     );
+-- GO
 
 
 
