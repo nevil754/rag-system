@@ -403,12 +403,6 @@ BEGIN
 END
 GO
 
-EXEC shared.sp_provision_tenant
-    @slug         = 'demo-corp',
-    @display_name = 'Demo Corporation',
-    @plan         = 'pro';
-GO
-
 PRINT 'init.sql completato.';
 GO
 

@@ -105,16 +105,6 @@ services:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
  
  
-  # OLD
-  # chainlit:
-  #   command: chainlit run app.py --host 0.0.0.0 --port 8080 -w
-  #   environment:
-  #     FASTAPI_URL: "http://fastapi:8000"
-  #     CHAINLIT_DEFAULT_TENANT: "demo-corp"
-  #   volumes:
-  #     - ./chainlit_app/app.py:/app/app.py
-  #     - ./chainlit_app/.chainlit:/app/.chainlit
-
 
   sqlserver:
     environment:

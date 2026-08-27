@@ -90,9 +90,6 @@ def create_app() -> FastAPI:
     from app.api.routes.documents import router as documents_router
     app.include_router(documents_router, prefix="/api/v1")
 
-    from app.api.routes.tenants import router as tenants_router
-    app.include_router(tenants_router, prefix="/api/v1")
-
     from app.api.routes.users import router as users_router
     app.include_router(users_router, prefix="/api/v1")
 

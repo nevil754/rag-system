@@ -210,9 +210,12 @@ async def get_current_platform_user(
 #     return tenant
 
 
-async def require_superadmin(
+async def get_is_superadmin(
     platform_user: Annotated[PlatformContext, Depends(get_current_platform_user)],
-) -> PlatformContext:
+) -> bool:
+    # Riletto ogni volta dal DB invece che fidarsi della claim is_superadmin nel JWT: un
+    # superadmin retrocesso resterebbe superadmin fino a scadenza del token (60min) se ci
+    # fidassimo solo del payload (stesso motivo del ricontrollo is_active in /auth/refresh).
     from sqlalchemy import text
     async with tenant_db.async_factory() as session:
         row = await session.execute(
@@ -220,12 +223,8 @@ async def require_superadmin(
             {"id": platform_user.platform_user_id},
         )
         result = row.fetchone()
-    if not result or not result.is_superadmin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accesso riservato ai superadmin",
-        )
-    return platform_user
+    return bool(result and result.is_superadmin)
+
 
 
 
@@ -238,8 +237,8 @@ CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
 
 AdminOnly = Annotated[TenantContext, Depends(require_admin)]
 
-SuperAdminOnly = Annotated[PlatformContext, Depends(require_superadmin)]
-
 CurrentPlatformUser = Annotated[PlatformContext, Depends(get_current_platform_user)]
+
+IsSuperAdmin = Annotated[bool, Depends(get_is_superadmin)]
 
 
