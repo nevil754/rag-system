@@ -217,7 +217,12 @@ def get_sync_engine():
         max_overflow=10,   #num connessioni 'extra' mantenute nel pool
         pool_pre_ping=True,   #controlla la connessione prima di ogni query
         pool_recycle=3600,   #ricicla le connessioni dopo 3600 secondi (1 ora) per evitare timeout
-        echo=False  #settings.app_debug. cosi attualmente non ho il doppio log 1 x loguru 1 x sqlalchemy
+        echo=False,  #settings.app_debug. cosi attualmente non ho il doppio log 1 x loguru 1 x sqlalchemy
+        # con collation *_SC_UTF8 (vedi init.sql) il driver ODBC 18 rifiuta i parametri
+        # NVARCHAR(MAX)/Text perche' SQLAlchemy li mappa a SQL_WLONGVARCHAR (legacy ntext)
+        # in setinputsizes -> "Cannot convert to text/ntext ... (4189)". Disabilitando
+        # setinputsizes pyodbc torna all'inferenza di tipo di default, compatibile con UTF8.
+        use_setinputsizes=False,
     )
     event.listen(engine, "checkin", _revert_impersonation_on_checkin)
     logger.info("Engine SQL Server sincrono creato")
@@ -237,7 +242,9 @@ def get_async_engine():
         max_overflow=10,
         pool_pre_ping=True,
         pool_recycle=3600,
-        echo=False  #settings.app_debug,
+        echo=False,  #settings.app_debug,
+        # vedi commento in get_sync_engine
+        use_setinputsizes=False,
     )
     # gli eventi del pool si registrano sul sync_engine sottostante: asyncio non ha un
     # equivalente nativo del pool di SQLAlchemy, quindi il pooling (e i suoi eventi)
