@@ -33,7 +33,7 @@ async def check_faithfulness(
         logger.debug(f"Hallucination score: {score:.2f}")
         return score
     except Exception as e:
-        # Default prudente: un check anti-allucinazione che fallisce non deve dichiarare
+        #Default prudente: un check anti-allucinazione che fallisce non deve dichiarare
         # "massima fedeltà" (1.0), altrimenti disattiva silenziosamente la protezione
         # proprio quando è meno affidabile (es. LLM che non risponde con un numero puro).
         logger.warning(f"Hallucination check fallito: {e}")
