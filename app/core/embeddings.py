@@ -82,8 +82,7 @@ def get_reranker_model() -> Any:
     settings = get_settings()
     if not settings.reranker_enabled:
         return None
-    from sentence_transformers import CrossEncoder
-    from sentence_transformers.cross_encoder import TextCrossEncoder
+    from sentence_transformers import CrossEncoder  #better than (è un'altra lib) from fastembed.rerank.cross_encoder import CrossEncoder (è offerta da fastembed)
     logger.info("Caricamento reranker", model=settings.reranker_model)
     reranker = CrossEncoder(
         settings.reranker_model,
