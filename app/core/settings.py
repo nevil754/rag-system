@@ -96,6 +96,7 @@ class AppSettings(BaseSettings):
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
     reranker_top_k: int = 5
     reranker_initial_k: int = 20
+    reranker_min_score: float = 0.2
 
     ingestion_prefer_docling: bool = True
     ingestion_extract_tables: bool = True
@@ -198,6 +199,7 @@ def _apply_yaml_overrides() -> None:
         ("retriever.search_type",   "RETRIEVER_SEARCH_TYPE"),
         ("reranker.enabled",        "RERANKER_ENABLED"),
         ("reranker.top_k",          "RERANKER_TOP_K"),
+        ("reranker.min_score",      "RERANKER_MIN_SCORE"),
         ("logging.level",           "LOG_LEVEL"),
         ("logging.json_output",     "LOG_JSON_OUTPUT"),
         ("logging.file.enabled",     "LOG_FILE_ENABLED"),

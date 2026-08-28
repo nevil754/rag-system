@@ -49,6 +49,7 @@ reranker:
  model: "BAAI/bge-reranker-v2-m3"
  top_k: 5
  initial_k: 20
+ min_score: 0.2
 
 metadata:
   config_file: "/app/config/metadata.yaml"

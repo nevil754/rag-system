@@ -110,6 +110,17 @@ async def retrieve(
         logger.debug("Retrieval: MMR applicata", risultati=len(fused))
     if settings.reranker_enabled and len(fused) > 1:
         fused = await _async_cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
+        # senza questa soglia, query poco informative (es. "ok, grazie!") ricevevano comunque
+        # i chunk "meno peggio" del fusion/MMR come contesto, anche con score reranker bassissimo
+        # (es. 0.11): l'LLM li usava come se fossero pertinenti e ri-generava la risposta
+        # precedente invece di riconoscere che non c'e' nulla di rilevante per la domanda.
+        before = len(fused)
+        fused = [item for item in fused if item["score"] >= settings.reranker_min_score]
+        if len(fused) < before:
+            logger.debug(
+                "Retrieval: chunk scartati per score reranker sotto soglia",
+                scartati=before - len(fused), soglia=settings.reranker_min_score,
+            )
 
     chunks = []
     for item in fused:
