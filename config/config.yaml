@@ -28,7 +28,7 @@ embeddings:
 
 llm:
   provider: "ollama"
-  model: "3.2:latest"
+  model: "llama3.2:latest"
   num_ctx: 2048
   api_key: "${OLLAMA_API_KEY}"
   base_url: "http://srvai2k22:11434/"
