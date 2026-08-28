@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentDB, CurrentRedis, CurrentTenant
-from app.schemas.chat import ChatRequest, ChatResponse, FeedbackRequest
+from app.schemas.chat import ChatHistoryResponse, ChatRequest, ChatResponse, FeedbackRequest
 from app.services.chat_service import ChatService
 
 
@@ -117,6 +117,31 @@ async def chat_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.get("/history", response_model=ChatHistoryResponse)
+async def chat_history(
+    tenant: CurrentTenant,
+    redis: CurrentRedis,
+    conversation_id: str | None = None,
+    before_id: int | None = None,
+    limit: int = 20,
+) -> ChatHistoryResponse:
+    """Senza conversation_id ritorna l'ultima conversazione dell'utente (per il caricamento
+    iniziale della pagina Chat); before_id pagina all'indietro (messaggi piu' vecchi) per lo
+    scroll-up infinito nella UI."""
+    service = ChatService(
+        redis=redis,
+        tenant_id=tenant.tenant_id,
+        tenant_slug=tenant.tenant_slug,
+        user_id=tenant.user_id,
+    )
+    result = await service.get_history(
+        conversation_id=conversation_id,
+        before_id=before_id,
+        limit=limit,
+    )
+    return ChatHistoryResponse(**result)
 
 
 @router.post("/feedback")

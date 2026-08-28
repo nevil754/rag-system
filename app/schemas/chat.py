@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -29,5 +30,18 @@ class FeedbackRequest(BaseModel):
     message_id: int
     rating: int = Field(..., ge=-1, le=1)
     comment: str | None = None
+
+class MessageSchema(BaseModel):
+    id: int
+    role: str
+    content: str
+    sources: list[SourceSchema] = []
+    created_at: datetime
+    hallucination_score: float | None = None
+
+class ChatHistoryResponse(BaseModel):
+    conversation_id: str | None
+    messages: list[MessageSchema] = []
+    has_more: bool = False
 
 

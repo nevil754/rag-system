@@ -248,6 +248,68 @@ class ChatService:
         })
 
 
+    async def get_history(
+        self,
+        conversation_id: str | None = None,
+        before_id: int | None = None,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        limit = max(1, min(limit, 100))
+        async with tenant_db.aget_session(self.tenant_slug) as session:
+            if not conversation_id:
+                row = (await session.execute(
+                    text("""
+                        SELECT TOP 1 id FROM conversations
+                        WHERE user_id = :user_id
+                        ORDER BY updated_at DESC
+                    """),
+                    {"user_id": self.user_id}
+                )).fetchone()
+                if not row:
+                    return {"conversation_id": None, "messages": [], "has_more": False}
+                conversation_id = str(row[0])
+
+            params: dict[str, Any] = {
+                "conv_id": conversation_id,
+                "user_id": self.user_id,
+                "limit": limit + 1,
+            }
+            before_clause = ""
+            if before_id is not None:
+                before_clause = "AND m.id < :before_id"
+                params["before_id"] = before_id
+
+            # +1 rispetto al limit richiesto: serve solo a sapere se esiste un'altra pagina
+            # (has_more), non viene mai restituito al chiamante.
+            result = await session.execute(
+                text(f"""
+                    SELECT TOP (:limit) m.id, m.role, m.content, m.sources, m.created_at, m.hallucination_score
+                    FROM messages m
+                    JOIN conversations c ON c.id = m.conversation_id
+                    WHERE m.conversation_id = :conv_id AND c.user_id = :user_id {before_clause}
+                    ORDER BY m.id DESC
+                """),
+                params
+            )
+            rows = result.fetchall()
+            has_more = len(rows) > limit
+            rows = rows[:limit]
+            rows.reverse()  # dal piu' vecchio al piu' recente, per il rendering della pagina
+
+            messages = [
+                {
+                    "id": r.id,
+                    "role": r.role,
+                    "content": r.content,
+                    "sources": json.loads(r.sources) if r.sources else [],
+                    "created_at": r.created_at,
+                    "hallucination_score": r.hallucination_score,
+                }
+                for r in rows
+            ]
+            return {"conversation_id": conversation_id, "messages": messages, "has_more": has_more}
+
+
     async def _save_messages(
         self,
         conv_id: str,
@@ -267,6 +329,8 @@ class ChatService:
                     IF NOT EXISTS (SELECT 1 FROM conversations WHERE id = :id)
                     INSERT INTO conversations (id, user_id, mode)
                     VALUES (:id, :user_id, 'rag')
+                    ELSE
+                    UPDATE conversations SET updated_at = SYSUTCDATETIME() WHERE id = :id
                 """),
                 {"id": conv_id, "user_id": self.user_id}
             )
