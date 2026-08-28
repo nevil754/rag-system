@@ -83,12 +83,13 @@ def get_reranker_model() -> Any:
     if not settings.reranker_enabled:
         return None
     from sentence_transformers import CrossEncoder
+    from sentence_transformers.cross_encoder import TextCrossEncoder
     logger.info("Caricamento reranker", model=settings.reranker_model)
     reranker = CrossEncoder(
         settings.reranker_model,
         max_length=512,   #ma xlenght context window
     )
-
+    #assicurati che cerchi il model 'models--BAAI--bge-reranker-base' in /cache/fastembed/, invece di default /cache/fastembed/.cache/huggingface/hub/ !!
     logger.info("Reranker caricato", model=settings.reranker_model)
     return reranker
 
