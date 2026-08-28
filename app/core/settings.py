@@ -75,6 +75,11 @@ class AppSettings(BaseSettings):
             f"?driver={self.sqlserver_driver.replace(' ', '+')}"
             f"&TrustServerCertificate=yes"
             f"&Encrypt=yes"
+            # richiesto da Microsoft per le collation *_SC_UTF8 (vedi init.sql): senza
+            # LongAsMax=yes il driver ODBC 18 puo' ancora bindare parametri lunghi come
+            # text/ntext legacy -> "Cannot convert to text/ntext ... (4189)" anche con
+            # colonne NVARCHAR(MAX). Vedi learn.microsoft.com collation-and-unicode-support.
+            f"&LongAsMax=yes"
         )
 
     redis_url: str = "redis://redis:6379/0"
