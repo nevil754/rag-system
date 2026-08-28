@@ -46,7 +46,7 @@ retriever:
 
 reranker:
  enabled: true
- model: "BAAI/bge-reranker-base"
+ model: "BAAI/bge-reranker-v2-m3"
  top_k: 5
  initial_k: 20
 

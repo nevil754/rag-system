@@ -52,8 +52,8 @@ async def aembed_query(text: str) -> list[float]:
 @lru_cache(maxsize=1)
 def get_sparse_model() -> Any:
     from fastembed import SparseTextEmbedding
-    logger.info("Caricamento modello sparse SPLADE", model="prithivida/Splade_PP_en_v1")
-    return SparseTextEmbedding(model_name="prithivida/Splade_PP_en_v1")
+    logger.info("Caricamento modello sparse SPLADE", model="Qdrant/bm25")
+    return SparseTextEmbedding(model_name="Qdrant/bm25")
 
 def embed_sparse_texts(texts: list[str]) -> list[dict]:
     model = get_sparse_model()

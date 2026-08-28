@@ -93,7 +93,7 @@ class AppSettings(BaseSettings):
     retriever_auto_filter: bool = False
 
     reranker_enabled: bool = True
-    reranker_model: str = "BAAI/bge-reranker-base"
+    reranker_model: str = "BAAI/bge-reranker-v2-m3"
     reranker_top_k: int = 5
     reranker_initial_k: int = 20
 
