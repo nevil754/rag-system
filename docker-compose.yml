@@ -184,7 +184,7 @@ services:
     #container_name: redis
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6379:6379" #"6379:6379" xk non ho necessario che redis sia accessibile dall'esterno, cosi è avaible solo x ki sul server (non dalla LAN) 
+      - "127.0.0.1:6380:6379" #"6379:6379" xk non ho necessario che redis sia accessibile dall'esterno, cosi è avaible solo x ki sul server (non dalla LAN) . 6379 è per il mio dev, 6380 è per il mio staging, e userò 6381 x il mio prod 
     volumes:
       - ${DATA_ROOT}/redis:/data   #redis_data:/data
     command:
