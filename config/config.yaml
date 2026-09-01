@@ -2,7 +2,7 @@ app:
   name: "Compet-e Srl RAG Enterprise Legal"
   version: "0.1.0"
   debug: false
-  environment: "development"
+  environment: "staging"
   description: "Compet-eSrl RAG system enterprise legal: con retrieval ibrido reranking e memoria conversazionale"
 
 ingestion:

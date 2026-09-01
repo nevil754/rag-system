@@ -31,7 +31,7 @@ class AppSettings(BaseSettings):
     app_version: str = "0.1.0"
     app_description: str = "RAG Enterprise per documenti legali"
     app_debug: bool = False
-    app_environment: Literal["development", "staging", "production"] = "development"
+    app_environment: Literal["development", "staging", "production"] = "staging"
 
     llm_provider: str = "ollama"
     llm_model: str = "llama3.2:latest"
