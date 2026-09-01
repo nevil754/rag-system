@@ -26,8 +26,8 @@ services:
       - ${DATA_ROOT}/uploads:/app/uploads
       - ${DATA_ROOT}/fastembed-cache:/cache/fastembed
     ports:
-      - "8080:8000"
-      - "5678:5678"
+      - "8081:8000"
+      - "5679:5678"
  
 
   celery-worker-high:
@@ -84,8 +84,8 @@ services:
     environment:
       QDRANT__LOG_LEVEL: "WARN"
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "6334:6333"
+      - "6335:6334"
  
 
   redis:
