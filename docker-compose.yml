@@ -10,7 +10,7 @@ services:
     #container_name: fastapi  !non specificare il nome, xk tu hai 1 solo server quindi ci sarebbe conflitto nome container e.g.fastapi di dev env -- fastapi staging env. senza sepcificare docker crea automaticamente e.g. <project_name>-<service_name>-<index> cioe <nome_prj>-fastapi-1
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8080:8000"
     env_file: .env
     environment:   #!!le vars arrivano all'interno di questo container SOLO PASSANDO attraverso questa door (OPPURE tramite env_file: .env, vedi here qua sopra)!! quindi ovviamente se in .env hai var MYVAR=xxx e poi qua in environment setti MYVAR=yyy allora sarà yyy.
       #REDIS_URL: "redis://redis:6379/0"  #DOVRESTI USARE PERO ok var gia settate in .env, quindi questo andrebbe commentato perche altrimenti il corretto REDIS_URL in .env sul server viene ignorato!
