@@ -148,7 +148,7 @@ services:
       --port=5555
       --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
     ports:
-      - "5555:5555"
+      - "5556:5555"  # 5555 x development | 5556 x staging | 5557 x production
     env_file: .env
     depends_on:
       - redis
