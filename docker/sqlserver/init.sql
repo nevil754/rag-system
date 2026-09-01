@@ -308,7 +308,7 @@ BEGIN
         tokens_in           INT                     NULL,
         tokens_out          INT                     NULL,
         latency_ms          INT                     NULL,
-        model_used          NVARCHAR(100)           NULL,
+        model_used          NVARCHAR(400)           NULL,
         hallucination_score FLOAT                   NULL,
         created_at          DATETIME2(3)               NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_msgs] PRIMARY KEY (id),

@@ -1,12 +1,4 @@
 
-README2.md
-README3.md
-README4.md
-README5.md
-README6.md
-
-screenshots/*
-
 .data/*
 
 # Byte-compiled / optimized / DLL files
@@ -65,10 +57,6 @@ cover/
 # Translations
 *.mo
 *.pot
-
-.claude/*
-CLAUDE.md
-CLAUDE2.md
 
 # Django stuff:
 *.log
@@ -156,13 +144,23 @@ venv.bak/
 
 # mkdocs documentation
 /site
+claude/*
 .claude/*
 CLAUDE.md
 CLAUDE2.md
+
 # mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+README2.md
+README3.md
+README4.md
+README5.md
+README6.md
+
+screenshots/*
 
 # Pyre type checker
 .pyre/
