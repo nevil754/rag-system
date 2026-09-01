@@ -161,7 +161,7 @@ services:
     #container_name: qdrant
     restart: unless-stopped
     ports:
-      - "6334:6333"
+      - "6339:6333"
       - "6335:6334"
     volumes:
       - ${DATA_ROOT}/qdrant:/qdrant/storage   #qdrant_data:/qdrant/storage

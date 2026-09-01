@@ -84,7 +84,7 @@ services:
     environment:
       QDRANT__LOG_LEVEL: "WARN"
     ports:
-      - "6334:6333"
+      - "6339:6333"  # 6333 x dev | 6334 x staging | 6335 x prod. cmnq ho io in development sta girando questo code, quindi la porta 6334 è gia occupata (sta girando gia il development environment, mentre here sto usando il staging environment)
       - "6335:6334"
  
 
