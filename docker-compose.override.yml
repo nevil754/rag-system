@@ -110,3 +110,6 @@ services:
     environment:
       MSSQL_MEMORY_LIMIT_MB: 2048
 
+
+#ok
+
