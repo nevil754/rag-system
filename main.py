@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_all(settings)
     await _check_services()
     await _seed_superadmin()
-    if settings.app_environment != "development":
+    if settings.app_environment == "production":
         await _preload_models()
     logger.info("Startup completato, app pronta")
     yield

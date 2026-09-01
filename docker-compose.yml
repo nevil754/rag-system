@@ -247,7 +247,7 @@ services:
              "-b"]
       interval: 10s
       timeout: 5s
-      retries: 18
+      retries: 10
       start_period: 30s
     networks:
       - rag-network
