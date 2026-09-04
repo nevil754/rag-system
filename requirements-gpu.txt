@@ -508,10 +508,11 @@ onnx==1.22.0
     # via
     #   unstructured
     #   unstructured-inference
+onnxruntime==1.29.0
     # via
     #   magika
     #   unstructured-inference
-onnxruntime-gpu==1.29.0
+onnxruntime-gpu==1.26.0
     # via
     #   -r requirements-gpu.in
     #   fastembed-gpu
