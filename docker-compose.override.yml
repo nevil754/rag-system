@@ -84,8 +84,8 @@ services:
     environment:
       QDRANT__LOG_LEVEL: "WARN"
     ports:
-      - "6339:6333"  # 6333 x dev | 6334 x staging | 6335 x prod. cmnq ho io in development sta girando questo code, quindi la porta 6334 è gia occupata (sta girando gia il development environment, mentre here sto usando il staging environment)
-      - "6335:6334"
+      - "${IP_SERVER1}:6339:6333"  # 6333 x dev | 6334 x staging | 6335 x prod. cmnq ho io in development sta girando questo code, quindi la porta 6334 è gia occupata (sta girando gia il development environment, mentre here sto usando il staging environment)
+      - "${IP_SERVER1}:6335:6334"  # NB: ports: e' una lista, Compose la SOSTITUISCE per intero rispetto a docker-compose.yml (non fa merge voce per voce) -- senza il bind qui, questo override rimetterebbe qdrant aperto su tutte le interfacce annullando il fix fatto nel file base
  
 
   redis:

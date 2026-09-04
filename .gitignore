@@ -134,6 +134,7 @@ env.bak/
 venv.bak/
 .env.local
 .env.*.local
+.env.ok
 
 # Spyder project settings
 .spyderproject
@@ -157,6 +158,9 @@ dmypy.json
 README2.md
 README3.md
 READEM3.2.md
+READEM3.3.md
+READEM3.4.md
+READEM3.5.md
 README4.md
 README5.md
 README6.md
