@@ -1,15 +1,4 @@
-# Variante GPU di docker/fastapi.Dockerfile per il server2 (con NVIDIA GPU).
-# Richiede sull'host: driver NVIDIA + NVIDIA Container Toolkit (vedi README3.2.md §6).
-#
-# Nota (README3.2.md §5): niente multi-stage builder(Debian)/runtime(Ubuntu) come nel Dockerfile
-# CPU, perche' copiare site-packages compilati (torch, onnxruntime-gpu) tra due distro diverse e'
-# a rischio ABI/glibc. Qui si builda e si gira sulla STESSA immagine NVIDIA/Ubuntu, in singolo stage.
-#
-# La coppia CUDA/cuDNN dell'immagine base deve combaciare con: il +cu128 di torch/torchvision e la
-# versione di onnxruntime-gpu in requirements-gpu.txt (oggi: torch+cu128, onnxruntime-gpu==1.29.0,
-# nvidia-cudnn-cu12==9.19.0.56). Verifica il tag esatto disponibile su hub.docker.com/r/nvidia/cuda/tags
-# prima del build: se "12.8.1-cudnn-runtime-ubuntu22.04" non esiste, usa il tag "*-cudnn-runtime-ubuntu22.04"
-# piu' vicino alla 12.8 pubblicato da NVIDIA.
+
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -18,8 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONFAULTHANDLER=1 \
     PIP_NO_CACHE_DIR=1
 
-# Python 3.11 (non nei repo standard di Ubuntu 22.04 -> deadsnakes) + driver ODBC per SQL Server,
-# stessi pacchetti apt del Dockerfile CPU (docker/fastapi.Dockerfile).
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         software-properties-common \
         curl \
@@ -46,10 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements-gpu.txt .
-# Rimuove l'eventuale onnxruntime CPU che unstructured/unstructured-inference potrebbero tirare come
-# dipendenza transitiva se requirements-gpu.txt viene rigenerato in futuro: le due distribuzioni
-# installerebbero entrambe in site-packages/onnxruntime in modo order-dipendente (README3.2.md §1.1).
-# Tenere solo onnxruntime-gpu.
+
 RUN sed -i '/^onnxruntime==/d' requirements-gpu.txt \
     && echo "onnxruntime pins rimasti:" \
     && grep -i "^onnxruntime" requirements-gpu.txt

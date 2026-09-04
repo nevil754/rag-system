@@ -1,7 +1,4 @@
-# Variante GPU di docker/celery.Dockerfile per il server2 (con NVIDIA GPU).
-# Richiede sull'host: driver NVIDIA + NVIDIA Container Toolkit (vedi README3.2.md §6).
-# Stesse note del fastapi-gpu.Dockerfile: singolo stage sulla stessa immagine NVIDIA/Ubuntu
-# (niente builder Debian + runtime Ubuntu, rischio ABI/glibc su torch/onnxruntime-gpu compilati).
+
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -9,9 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     C_FORCE_ROOT=1
 
-# Python 3.11 (deadsnakes) + driver ODBC per SQL Server + build-essential (compilazione dipendenze
-# native) + librerie runtime per parsing documenti (docling/unstructured), stessi pacchetti apt del
-# Dockerfile CPU (docker/celery.Dockerfile).
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         software-properties-common \
         curl \
@@ -43,10 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements-gpu.txt .
-# Rimuove l'eventuale onnxruntime CPU che unstructured/unstructured-inference potrebbero tirare come
-# dipendenza transitiva se requirements-gpu.txt viene rigenerato in futuro: le due distribuzioni
-# installerebbero entrambe in site-packages/onnxruntime in modo order-dipendente (README3.2.md §1.1).
-# Tenere solo onnxruntime-gpu.
+
 RUN sed -i '/^onnxruntime==/d' requirements-gpu.txt \
     && echo "onnxruntime pins rimasti:" \
     && grep -i "^onnxruntime" requirements-gpu.txt
@@ -59,3 +51,6 @@ COPY config/ ./config/
 
 CMD ["python3.11", "-m", "celery", "-A", "app.workers.celery_app.celery_app", "worker", \
      "--loglevel=info", "--concurrency=2"]
+
+
+     
