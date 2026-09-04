@@ -48,6 +48,7 @@ class AppSettings(BaseSettings):
     embeddings_base_url: str = ""
     embeddings_batch_size: int = 64
     embeddings_cache_dir: str = "/cache/fastembed"
+    embeddings_use_cuda: bool = False   #x gpu, settalo a True solo su server2 (.env EMBEDDINGS_USE_CUDA=true)
 
     qdrant_url: str = "http://qdrant:6333"
     qdrant_api_key: str = ""

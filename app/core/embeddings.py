@@ -20,6 +20,8 @@ def get_embedding_model() -> Any:
         cache_dir=settings.embeddings_cache_dir,
         max_length=512,   #ma xlenght context window
         threads=4,   #threads per processare i testi
+        cuda=settings.embeddings_use_cuda,                          #added x gpu
+        device_ids=[0] if settings.embeddings_use_cuda else None,   #added x gpu
     )
     logger.info("Modello embedding caricato", model=settings.embeddings_model)
     return model
@@ -51,9 +53,14 @@ async def aembed_query(text: str) -> list[float]:
 
 @lru_cache(maxsize=1)
 def get_sparse_model() -> Any:
+    from app.core.settings import get_settings   #added x gpu
+    settings = get_settings()   #added x gpu
     from fastembed import SparseTextEmbedding
     logger.info("Caricamento modello sparse SPLADE", model="Qdrant/bm25")
-    return SparseTextEmbedding(model_name="Qdrant/bm25")
+    return SparseTextEmbedding(
+        model_name="Qdrant/bm25",
+        cuda=settings.embeddings_use_cuda,   #added x gpu
+    )
 
 def embed_sparse_texts(texts: list[str]) -> list[dict]:
     model = get_sparse_model()
@@ -83,6 +90,7 @@ def get_reranker_model() -> Any:
     if not settings.reranker_enabled:
         return None
     from sentence_transformers import CrossEncoder  #better than (è un'altra lib) from fastembed.rerank.cross_encoder import CrossEncoder (è offerta da fastembed)
+    # nota x gpu: CrossEncoder si auto-rileva la GPU via torch.cuda.is_available(), nessun cuda= da passare qui
     logger.info("Caricamento reranker", model=settings.reranker_model)
     reranker = CrossEncoder(
         settings.reranker_model,

@@ -30,6 +30,7 @@ services:
       SQLSERVER_PORT: "1434"   #porta pubblica di sqlserver su server1
       SQLSERVER_DB: "RAGChat"
       QDRANT_URL: "http://${IP_SERVER1}:6339"      #porta pubblica di qdrant su server1
+      EMBEDDINGS_USE_CUDA: "true"   # added x gpu -- attiva cuda= in fastembed (app/core/embeddings.py), il reranker si auto-rileva da solo!
       BASE_URL_OLLAMA: "http://srvai2k22:11434/"   #"http://ollama:11434"
       HF_HOME: "/cache/fastembed/.cache/huggingface"
       FASTEMBED_CACHE_PATH: "/cache/fastembed"   #fastembed (default usa proprio /tmp/fastembed_cache) decide dove settare la sua cache, quindi here re-indirizzo al mio volume target; questo serve quando scarichi manaulmente da riga di comando i 3 models (per averli gia disponibili quando userai l'app). cmnq in config.yam in cache_dir (che utilizzi proprio questa var quando scarichi il modello e.g. vedi embeddings.py) decidi anche li dove download i 3 modelli.
@@ -88,6 +89,7 @@ services:
       SQLSERVER_HOST: "${IP_SERVER1}"    #"sqlserver"  x when prj was all in server1
       SQLSERVER_PORT: "1434"   #porta pubblica di sqlserver su server1
       QDRANT_URL: "http://${IP_SERVER1}:6339"   #porta pubblica di qdrant su server1
+      EMBEDDINGS_USE_CUDA: "true"   # added x gpu -- questo worker usa docker/celery-gpu.Dockerfile quindi ok attivarlo
       HF_HOME: "/cache/fastembed/.cache/huggingface"
       FASTEMBED_CACHE_PATH: "/cache/fastembed"
       HOME: "/cache/fastembed"
