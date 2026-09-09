@@ -179,7 +179,7 @@ def reprocess_document(
     logger.info(f"Vecchi vettori cancellati per documento {document_id}")
     task = ingest_document.apply_async(
         args=[tenant_id, tenant_slug, document_id, file_path],
-        queue="low",
+        queue="high",   #va sul worker GPU (celery-worker-high), stesso motivo di document_service.py
     )
     # Senza questa riga, ingest_document (che fa UPDATE ingestion_jobs SET status='running'
     # WHERE document_id=:doc_id appena parte) avrebbe ritrovato/sovrascritto la riga

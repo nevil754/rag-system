@@ -123,10 +123,7 @@ async def _check_services() -> None:
         logger.warning(f"Qdrant non raggiungibile all'avvio: {e}")
 
 async def _seed_superadmin() -> None:
-    # Prima il superadmin (admin@platform.competesrl.it) veniva creato da un INSERT con
-    # email/hash fissi dentro docker/sqlserver/init.sql, versionato nel repo. Ora le
-    # credenziali vive solo come env var sul server (mai committate) e il seed idempotente
-    # avviene qui, al primo avvio in cui shared.platform_users non ha ancora quella riga.
+
     if not settings.superadmin_email or not settings.superadmin_password:
         logger.warning(
             "SUPERADMIN_EMAIL/SUPERADMIN_PASSWORD non impostate: nessun superadmin creato"

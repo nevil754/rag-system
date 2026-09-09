@@ -86,7 +86,7 @@ class DocumentService:
                     str(file_path),
                     collection_id,
                 ],
-                queue="default",   #sets x this celery task
+                queue="high",   #sets x this celery task -- va sul worker GPU (celery-worker-high, server2), non su celery-worker-default (CPU only)
                 countdown=3,       #sets x this celery task
                 headers={"tenant_id": self.tenant_id},    #sets x this celery task
             )

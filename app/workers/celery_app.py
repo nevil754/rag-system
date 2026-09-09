@@ -41,8 +41,8 @@ def create_celery_app() -> Celery:
         ],
         task_default_queue="default",
         task_routes={
-            "app.workers.ingestion_tasks.ingest_document":   {"queue": "default"},
-            "app.workers.ingestion_tasks.reprocess_document":{"queue": "low"},
+            "app.workers.ingestion_tasks.ingest_document":   {"queue": "high"},
+            "app.workers.ingestion_tasks.reprocess_document":{"queue": "high"},
             "app.workers.cleanup_tasks.purge_tenant":        {"queue": "shared_cleanup"},
             "app.workers.cleanup_tasks.expire_sessions":     {"queue": "shared_cleanup"},
             "app.workers.scheduled_tasks.rollup_usage":      {"queue": "shared_cleanup"},
