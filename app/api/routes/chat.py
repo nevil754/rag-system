@@ -127,9 +127,7 @@ async def chat_history(
     before_id: int | None = None,
     limit: int = 20,
 ) -> ChatHistoryResponse:
-    """Senza conversation_id ritorna l'ultima conversazione dell'utente (per il caricamento
-    iniziale della pagina Chat); before_id pagina all'indietro (messaggi piu' vecchi) per lo
-    scroll-up infinito nella UI."""
+
     service = ChatService(
         redis=redis,
         tenant_id=tenant.tenant_id,

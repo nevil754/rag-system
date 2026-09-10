@@ -67,10 +67,7 @@ async def retrieve(
             )
     qdrant_filter = qmodels.Filter(must=must_conditions)
 
-    # settings.retriever_search_type ("dense" | "sparse" | "hybrid") era definito ma mai
-    # letto qui: il comportamento reale era controllato solo da qdrant_use_sparse (che in
-    # realtà indica solo se la collection HA vettori sparse indicizzati, non la strategia di
-    # query). Ora search_type sceglie davvero quali rami eseguire a runtime.
+
     search_type = settings.retriever_search_type
 
     dense_results = []
@@ -110,10 +107,7 @@ async def retrieve(
         logger.debug("Retrieval: MMR applicata", risultati=len(fused))
     if settings.reranker_enabled and len(fused) > 1:
         fused = await _async_cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
-        # senza questa soglia, query poco informative (es. "ok, grazie!") ricevevano comunque
-        # i chunk "meno peggio" del fusion/MMR come contesto, anche con score reranker bassissimo
-        # (es. 0.11): l'LLM li usava come se fossero pertinenti e ri-generava la risposta
-        # precedente invece di riconoscere che non c'e' nulla di rilevante per la domanda.
+
         before = len(fused)
         fused = [item for item in fused if item["score"] >= settings.reranker_min_score]
         if len(fused) < before:

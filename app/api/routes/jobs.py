@@ -6,9 +6,7 @@ from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.schemas.common import PaginatedResponse
 from app.schemas.document import IngestionJobSchema
 
-
 router = APIRouter(prefix="/jobs", tags=["jobs"])
-
 
 @router.get("", response_model=PaginatedResponse[IngestionJobSchema])
 async def list_jobs(

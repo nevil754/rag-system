@@ -94,6 +94,5 @@ def get_llm_for_tenant(
             max_tokens=settings.llm_max_tokens,
             streaming=settings.llm_streaming,
         )
-
     return get_llm()
 

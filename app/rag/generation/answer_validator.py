@@ -78,8 +78,6 @@ def validate_answer(
         was_modified=modified,
     )
 
-
-
 def _truncate_at_sentence(text: str, max_length: int) -> str:
     if len(text) <= max_length:
         return text

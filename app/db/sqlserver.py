@@ -30,7 +30,7 @@ class TenantDB:
             self._sync_factory = sessionmaker(
                 bind=get_sync_engine(),
                 autocommit=False,  #SQLAlchemy non esegue automaticamente il COMMIT dopo ogni operazione
-                autoflush=False,   #"Invia al database tutte le modifiche pendenti, ma senza fare COMMIT."
+                autoflush=False,   #means "Invia al database tutte le modifiche pendenti, ma senza fare COMMIT."
             )
         return self._sync_factory
 
@@ -64,12 +64,7 @@ class TenantDB:
                     session.execute(text("REVERT"))
                     session.commit()
                 except Exception as e:
-                    # EXECUTE AS vive sulla connessione fisica, non sulla transazione: un
-                    # REVERT fallito la rimanderebbe nel pool ancora impersonata come utente
-                    # ristretto del tenant, e la prossima richiesta qualsiasi che la pesca dal
-                    # pool (anche non-tenant, es. platform-login su shared.*) erediterebbe
-                    # quel contesto e fallirebbe con "permission denied". Invalidarla forza il
-                    # pool a scartarla invece di riusarla.
+
                     logger.error(f"REVERT fallito, invalido la connessione: {e}", tenant_slug=tenant_slug)
                     session.invalidate()
             session.close()
@@ -94,10 +89,7 @@ class TenantDB:
                         await session.execute(text("REVERT"))   #se era stato fatto e.g.EXECUTE AS USER = 'tenant_acme', ora con questo invece torni all'user origine e.g. AppLogin
                         await session.commit()
                     except Exception as e:
-                        # vedi commento nella versione sync (get_session) qui sopra: REVERT
-                        # fallito → connessione ancora impersonata → va invalidata, non
-                        # rimandata nel pool, altrimenti "avvelena" la prossima richiesta
-                        # qualsiasi che la riceve in checkout dal pool.
+
                         logger.error(f"REVERT fallito, invalido la connessione: {e}", tenant_slug=tenant_slug)
                         await session.invalidate()
 
@@ -188,15 +180,7 @@ def _slug_to_user(slug: str) -> str:
 
 
 def _revert_impersonation_on_checkin(dbapi_connection, connection_record) -> None:
-    # Le sessioni tenant-scoped (get_session/aget_session) fanno EXECUTE AS USER su un
-    # utente ristretto del tenant e poi REVERT a fine richiesta. Se quel REVERT non va a
-    # buon fine (eccezione non propagata fin qui, richiesta cancellata a metà, ecc.) la
-    # connessione fisica torna nel pool ancora impersonata: una richiesta successiva
-    # completamente scollegata (es. shared.* via async_factory() nudo) la ripescherebbe
-    # dal pool ereditando quel contesto ristretto e fallirebbe con "permission denied" su
-    # oggetti shared.* (vedi bug 2026-08-27 su POST /api/v1/spaces). Prima che una
-    # connessione rientri nel pool, tenta comunque un REVERT: no-op se non c'era nulla da
-    # revertire, altrimenti scarta la connessione invece di rimetterla in circolo.
+
     try:
         cursor = dbapi_connection.cursor()
         cursor.execute("BEGIN TRY REVERT; END TRY BEGIN CATCH END CATCH")
@@ -218,11 +202,8 @@ def get_sync_engine():
         pool_pre_ping=True,   #controlla la connessione prima di ogni query
         pool_recycle=3600,   #ricicla le connessioni dopo 3600 secondi (1 ora) per evitare timeout
         echo=False,  #settings.app_debug. cosi attualmente non ho il doppio log 1 x loguru 1 x sqlalchemy
-        # con collation *_SC_UTF8 (vedi init.sql) il driver ODBC 18 rifiuta i parametri
-        # NVARCHAR(MAX)/Text perche' SQLAlchemy li mappa a SQL_WLONGVARCHAR (legacy ntext)
-        # in setinputsizes -> "Cannot convert to text/ntext ... (4189)". Disabilitando
-        # setinputsizes pyodbc torna all'inferenza di tipo di default, compatibile con UTF8.
-        use_setinputsizes=False,
+
+        use_setinputsizes=False,  #x driver ODBC 18 x sqlalchemy per non mapparli a SQL_WLONGVARCHAR (legacy ntext) ma invece correttamente in NVARCHAR(MAX)/Text (compatibile w UTF8)
     )
     event.listen(engine, "checkin", _revert_impersonation_on_checkin)
     logger.info("Engine SQL Server sincrono creato")
@@ -246,9 +227,7 @@ def get_async_engine():
         # vedi commento in get_sync_engine
         use_setinputsizes=False,
     )
-    # gli eventi del pool si registrano sul sync_engine sottostante: asyncio non ha un
-    # equivalente nativo del pool di SQLAlchemy, quindi il pooling (e i suoi eventi)
-    # avviene comunque a livello sincrono anche per un AsyncEngine.
+
     event.listen(engine.sync_engine, "checkin", _revert_impersonation_on_checkin)
     logger.info("Engine SQL Server asincrono creato")
     return engine

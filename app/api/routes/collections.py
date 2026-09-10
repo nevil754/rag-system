@@ -7,10 +7,7 @@ from app.schemas.common import PaginatedResponse
 from app.schemas.document import CollectionCreate, CollectionSchema
 from loguru import logger
 
-
-
 router = APIRouter(prefix="/collections", tags=["collections"])
-
 
 @router.post("", response_model=CollectionSchema, status_code=status.HTTP_201_CREATED)
 async def create_collection(
@@ -83,9 +80,7 @@ async def delete_collection(
     if not row.fetchone():
         raise HTTPException(status_code=404, detail="Collection non trovata")
 
-    # Senza cascata, i documenti restavano `status != 'deleted'` (visibili in GET /documents e
-    # ricercabili in RAG) e i loro vettori restavano vivi su Qdrant anche dopo l'eliminazione
-    # della collection — stessa cautela già applicata in delete_document (documents.py).
+
     from app.core.vectorstore import get_async_qdrant_client, get_collection_name
     from qdrant_client.http import models as qmodels
     client = get_async_qdrant_client()

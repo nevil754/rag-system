@@ -181,9 +181,7 @@ def reprocess_document(
         args=[tenant_id, tenant_slug, document_id, file_path],
         queue="high",   #va sul worker GPU (celery-worker-high), stesso motivo di document_service.py
     )
-    # Senza questa riga, ingest_document (che fa UPDATE ingestion_jobs SET status='running'
-    # WHERE document_id=:doc_id appena parte) avrebbe ritrovato/sovrascritto la riga
-    # dell'ingestion originale invece di tracciare questo nuovo tentativo separatamente.
+
     from uuid import uuid4
     with tenant_db.get_session(tenant_slug) as session:
         session.execute(

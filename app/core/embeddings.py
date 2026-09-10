@@ -90,7 +90,7 @@ def get_reranker_model() -> Any:
     if not settings.reranker_enabled:
         return None
     from sentence_transformers import CrossEncoder  #better than (è un'altra lib) from fastembed.rerank.cross_encoder import CrossEncoder (è offerta da fastembed)
-    # nota x gpu: CrossEncoder si auto-rileva la GPU via torch.cuda.is_available(), nessun cuda= da passare qui
+    #x gpu: CrossEncoder si auto-rileva la GPU via torch.cuda.is_available(), nessun cuda= da passare qui
     logger.info("Caricamento reranker", model=settings.reranker_model)
     reranker = CrossEncoder(
         settings.reranker_model,

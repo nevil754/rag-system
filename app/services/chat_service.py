@@ -143,10 +143,7 @@ class ChatService:
         conversation_id: str | None = None,
         collection_id: str | None = None,
     ) -> AsyncGenerator[tuple[str, Any], None]:
-        """Yielda tuple (kind, payload): ("token", str) per ogni pezzo di risposta, poi
-        esattamente un ("meta", dict) prima di terminare. Canale strutturato — non più un
-        carattere sentinella (\\x1e) nel testo, che un token contenente per coincidenza
-        quello stesso carattere avrebbe rotto (interpretato come inizio dei metadata)."""
+
         conv_id = conversation_id or str(uuid4())
         query_hash = _hash_query(question, conv_id, collection_id)
         cached = await self.redis.get_query_cache(query_hash)
@@ -236,15 +233,14 @@ class ChatService:
             "hallucination_score": round(hall_score, 3),
         }
         await self.redis.set_query_cache(query_hash, json.dumps(response_to_cache))   #ok attualmente non gli passo il ttl il time-to-live
-        # tokens_in/tokens_out reali quando il provider li espone in streaming (OpenAI/Google),
-        # 0 quando non disponibili (es. Ollama) — comunque non più sempre hardcoded a 0.
+        #tokens_in/tokens_out reali quando il provider li espone in streaming (OpenAI/Google), 0 quando non disponibili (es. Ollama), comunque non più sempre hardcoded a 0.
         await self._increment_usage_stats(tokens_in=tokens_in, tokens_out=tokens_out)
         yield ("meta", {
             "sources": sources,
             "conversation_id": conv_id,
             "latency_ms": latency_ms,
             "hallucination_score": round(hall_score, 3),
-            "answer": full_answer,   #post-validate_answer(): puo differire dai token grezzi gia streammati se il validator ha corretto la risposta
+            "answer": full_answer,   #post-validate_answer(), puo differire dai token grezzi gia streammati se il validator ha corretto la risposta
         })
 
 
@@ -279,8 +275,7 @@ class ChatService:
                 before_clause = "AND m.id < :before_id"
                 params["before_id"] = before_id
 
-            # +1 rispetto al limit richiesto: serve solo a sapere se esiste un'altra pagina
-            # (has_more), non viene mai restituito al chiamante.
+
             result = await session.execute(
                 text(f"""
                     SELECT TOP (:limit) m.id, m.role, m.content, m.sources, m.created_at, m.hallucination_score
@@ -294,7 +289,7 @@ class ChatService:
             rows = result.fetchall()
             has_more = len(rows) > limit
             rows = rows[:limit]
-            rows.reverse()  # dal piu' vecchio al piu' recente, per il rendering della pagina
+            rows.reverse()  #dal piu' vecchio al piu' recente, per il rendering della pagina
 
             messages = [
                 {
@@ -340,7 +335,7 @@ class ChatService:
                     VALUES (:conv_id, 'user', :content)   
                 """),
                 {"conv_id": conv_id, "content": question}
-            )  #TODO usa di default 'user'! check in future all ok
+            ) 
 
             result = await session.execute(
                 text("""

@@ -157,7 +157,7 @@ async def delete_document(
             )
         )
     except Exception as e:
-        #non fare soft-delete in SQL se i vettori Qdrant non sono stati cancellati, altrimenti il documento risulterebbe "eliminato" mentre i suoi chunk restano vivi e continuano a comparire nelle risposte di /chat (README9.md punto upload-E)
+
         logger.error(f"Errore cancellazione vettori Qdrant per documento {document_id}: {e}")
         raise HTTPException(
             status_code=502,

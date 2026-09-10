@@ -6,9 +6,8 @@ from app.core.security import decode_access_token, extract_bearer_token
 
 
 class TenantMiddleware(BaseHTTPMiddleware):
-    """
-    questo middleware arricchisce solo il request.state per uso nei log e nel rate limiter
-    """
+
+    #questo middleware arricchisce solo il request.state per uso nei log e nel rate limiter
 
     PUBLIC_PATHS = {"/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"}
 
@@ -35,9 +34,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 request.state.user_role = payload.get("role")
                 request.state.user_email = payload.get("email")
         elif request.headers.get("X-API-Key"):
-            # Senza questo ramo, le richieste autenticate solo via X-API-Key restavano con
-            # tenant_id/user_id = None qui, e RateLimitMiddleware (che gira dopo, leggendo
-            # request.state) le lasciava passare senza applicare alcun rate limit.
+
             from app.api.deps import _validate_api_key
             context = await _validate_api_key(request.headers["X-API-Key"])
             if context:

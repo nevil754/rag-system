@@ -125,10 +125,7 @@ class TenantRedis:
         key = self._key("ratelimit", user_id)
         count = await self._redis.incr(key)
         if count == 1:
-            # TTL impostata SOLO alla prima richiesta della finestra: rinnovarla ad ogni
-            # chiamata (come faceva prima con pipe.expire incondizionato) impedisce alla
-            # chiave di scadere mai sotto traffico continuativo, facendo crescere count
-            # senza limiti e bloccando l'utente con 429 in modo permanente.
+  
             await self._redis.expire(key, window_seconds)
         return ( count<=max_requests, count )
 

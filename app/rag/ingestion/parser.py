@@ -6,7 +6,6 @@ from loguru import logger
 from app.core.settings import get_settings
 from app.rag.ingestion.cleaner import clean_text
 
-
 settings = get_settings()
 
 class ParsedDocument:
@@ -69,10 +68,7 @@ def _parse_with_docling(file_path: str) -> ParsedDocument:
         if content:
             page_texts.setdefault(page_no, []).append(content)
 
-    # clean_text applicata anche qui (non solo su full_text in pipeline.py): il matching
-    # chunk->pagina in chunker._find_page_number confronta chunk_text (ritagliato dal
-    # markdown pulito) contro queste pagine — se restassero "sporche" (spazi/righe diverse
-    # da come sono nel chunk) il match fallirebbe quasi sempre.
+
     pages = [ clean_text("\n".join(page_texts.get(p, []))) for p in range(1, len(doc.pages) + 1) ]
     tables = []
     if settings.ingestion_extract_tables:

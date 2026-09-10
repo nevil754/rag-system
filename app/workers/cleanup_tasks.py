@@ -36,11 +36,7 @@ def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
             text("UPDATE shared.tenants SET is_active = 0 WHERE slug = :slug"),
             {"slug": tenant_slug}
         )
-        # DROP SCHEMA fallisce sempre se lo schema contiene ancora oggetti (SQL Server non
-        # ha un DROP SCHEMA ... CASCADE) — e lo schema di un tenant ha sempre almeno le
-        # tabelle create da shared.sp_provision_tenant. Le droppiamo prima tutte (nessuna FK
-        # tra loro, verificato in docker/sqlserver/init.sql), poi l'utente dedicato, poi lo
-        # schema stesso — stesso pattern di SQL dinamico già usato in sp_provision_tenant.
+
         session.execute(text(f"""
             DECLARE @sql NVARCHAR(MAX) = N'';
             SELECT @sql = @sql + N'DROP TABLE [{schema_name}].[' + t.name + N'];' + CHAR(13)

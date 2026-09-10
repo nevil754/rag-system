@@ -10,9 +10,7 @@ from sqlalchemy import text
 
 
 async def generate_unique_slug(name: str) -> str:
-    # Stessa logica usata da POST /spaces (self-service): riusata anche da POST /tenants
-    # (superadmin) cosi lo slug si genera sempre allo stesso modo, invece di farselo
-    # scrivere a mano da chi crea l'ufficio.
+
     base_slug = slugify(name) or "space"
     slug = base_slug
     async with tenant_db.async_factory() as session:
@@ -80,9 +78,7 @@ async def provision_tenant(
             )
         log.info("Admin creato per il tenant", admin_email=admin_email, admin_user_id=admin_user_id)
     elif owner_user_id and owner_email and owner_password_hash:
-        #Lo Space è creato dal proprio owner (platform user): riusiamo lo stesso id e lo
-        # stesso hash password già presenti in shared.platform_users, nessun re-hash, così
-        #/auth/me e un eventuale login classico diretto su questo tenant restano coerenti.
+
         admin_user_id = owner_user_id
         async with tenant_db.aget_session(slug) as session:
             await session.execute(

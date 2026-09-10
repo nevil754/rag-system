@@ -213,9 +213,7 @@ async def get_current_platform_user(
 async def get_is_superadmin(
     platform_user: Annotated[PlatformContext, Depends(get_current_platform_user)],
 ) -> bool:
-    # Riletto ogni volta dal DB invece che fidarsi della claim is_superadmin nel JWT: un
-    # superadmin retrocesso resterebbe superadmin fino a scadenza del token (60min) se ci
-    # fidassimo solo del payload (stesso motivo del ricontrollo is_active in /auth/refresh).
+
     from sqlalchemy import text
     async with tenant_db.async_factory() as session:
         row = await session.execute(

@@ -7,9 +7,7 @@ async def check_faithfulness(
     answer: str,
     context: str,
 ) -> float:
-    # `context` deve essere lo stesso testo effettivamente mostrato al LLM in generazione
-    # (build_rag_context()["context"]), non una selezione indipendente dei chunk: altrimenti
-    # il check valuta contro un contesto diverso da quello che ha davvero prodotto la risposta.
+
     if not context or not answer:
         return 1.0
     try:
@@ -33,9 +31,7 @@ async def check_faithfulness(
         logger.debug(f"Hallucination score: {score:.2f}")
         return score
     except Exception as e:
-        #Default prudente: un check anti-allucinazione che fallisce non deve dichiarare
-        # "massima fedeltà" (1.0), altrimenti disattiva silenziosamente la protezione
-        # proprio quando è meno affidabile (es. LLM che non risponde con un numero puro).
+
         logger.warning(f"Hallucination check fallito: {e}")
         return 0.0
 

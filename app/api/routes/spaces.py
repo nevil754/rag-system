@@ -17,8 +17,7 @@ settings = get_settings()
 
 class SpaceCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    # Piano e credenziali admin dedicate: onorati solo se il richiedente è superadmin (vedi
-    # create_space), riservati alla creazione "d'ufficio" senza legarlo a chi lo crea.
+
     plan: str = "starter"
     admin_email: EmailStr | None = None
     admin_password: str | None = None
@@ -39,8 +38,7 @@ class SpaceSchema(BaseModel):
 
 
 async def _get_managed_space(space_id: str, owner_user_id: str, is_superadmin: bool) -> dict:
-    # Un superadmin gestisce qualunque Space (anche quelli senza owner o di un altro
-    # account); un utente normale solo i propri.
+
     async with tenant_db.async_factory() as session:
         if is_superadmin:
             row = await session.execute(
@@ -117,8 +115,7 @@ async def create_space(
         raise HTTPException(status_code=409, detail=str(e))
 
     if custom_credentials:
-        # Ufficio assegnato a un admin dedicato (email/password fornite dal superadmin):
-        # non legato all'account platform di chi lo crea, come il vecchio "Gestione uffici".
+
         logger.info(
             "Creazione nuovo space con admin dedicato (superadmin)",
             platform_user_id=platform_user.platform_user_id,

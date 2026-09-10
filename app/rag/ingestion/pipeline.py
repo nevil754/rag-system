@@ -53,14 +53,11 @@ def run_ingestion_pipeline(
         logger.debug( f"Sparse embedding: {len(sparse_vectors)} vettori generati" )
     else:
         sparse_vectors = [None] * len(vectors)
-    # force_recreate NON va mai propagato qui: questa funzione gira ad ogni singolo upload,
-    # e un client Qdrant con settings.qdrant_force_recreate=True cancellerebbe l'intera
-    # collection del tenant (tutti i documenti già ingeriti) al primo upload successivo.
-    # ensure_collection senza force_recreate resta idempotente: crea solo se non esiste.
+
     collection_name = ensure_collection( tenant_slug )
     client = get_qdrant_client()
     from qdrant_client.http import models as qmodels
-    # Classificato una volta per documento (era ripetuto identico per ogni chunk).
+    #classificato una volta per documento (prima era ripetuto identico per ogni chunk).
     doc_type = classify_document(clean[:500], filename)
     points = []
     for chunk, vector, sparse_vec in zip( chunks, vectors, sparse_vectors ):
@@ -81,9 +78,7 @@ def run_ingestion_pipeline(
                 indices=sparse_vec["indices"],
                 values=sparse_vec["values"],
             )
-        #ID deterministico (document_id + posizione chunk) invece di uuid4 casuale: una
-        #re-ingestion dello stesso documento sovrascrive gli stessi punti invece di
-        #duplicarli, rendendo l'upsert idempotente.
+
         point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{document_id}:{chunk.chunk_index}"))
         points.append( qmodels.PointStruct(
             id=point_id,

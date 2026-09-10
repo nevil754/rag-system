@@ -74,9 +74,7 @@ async def astream_rag_chain(
     session_messages: list[dict],
     tenant_name: str = "Compet-e Compliance AI",
 ) -> AsyncGenerator[tuple[str, Any], None]:
-    """Yielda tuple (kind, payload): ("token", str) per ogni pezzo di risposta, poi
-    esattamente un ("final", dict) con context/tokens_in/tokens_out prima di terminare —
-    canale strutturato invece di un carattere sentinella nel testo (vedi chat_service.py)."""
+
     logger.debug(
         "RAG chain streaming: avvio generazione",
         tenant=tenant_name,
@@ -102,9 +100,9 @@ async def astream_rag_chain(
         if token:
             yield ("token", token)
         accumulated = chunk if accumulated is None else accumulated + chunk
-    # Non tutti i provider/versioni espongono usage_metadata in streaming (es. Ollama):
-    # in quel caso restano 0 invece di inventare un conteggio, ma almeno dove disponibile
-    # (OpenAI/Google) i token reali vengono tracciati anche sul canale streaming.
+    #non tutti i provider/versioni espongono usage_metadata in streaming (es. Ollama):
+    #in quel caso restano 0 invece di inventare un conteggio, ma almeno dove disponibile
+    #(OpenAI/Google) i token reali vengono tracciati anche sul canale streaming.
     usage = getattr(accumulated, "usage_metadata", None) or {} if accumulated is not None else {}
     yield ("final", {
         "context": ctx["context"],
