@@ -37,11 +37,7 @@ class DocumentService:
                 f"(max {settings.ingestion_max_file_mb}MB)"
             )
         file_hash = hashlib.sha256(file_bytes).hexdigest()   #il risultato di sha-256 è attualmente binario quindi hexdigest() lo converte in str leggibile esadecimale
-        #UPDLOCK+HOLDLOCK: non c'è un vincolo UNIQUE su file_hash a DB, quindi senza questi
-        #hint due upload concorrenti dello stesso file potrebbero passare entrambi questo
-        #check prima che il primo faccia commit (race TOCTOU). Il lock resta fino al commit/
-        #rollback di questa stessa transazione (righe 89/91 sotto), serializzando gli upload
-        #concorrenti con lo stesso file_hash per questo tenant.
+
         existing = await self.db.execute(
             text("SELECT id FROM documents WITH (UPDLOCK, HOLDLOCK) WHERE file_hash = :hash AND status != 'deleted'"),
             {"hash": file_hash}

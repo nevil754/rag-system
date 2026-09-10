@@ -75,10 +75,7 @@ def ingest_document(
                 """),
                 {"doc_id": document_id}
             )
-            #AND status != 'deleted': se il documento è stato cancellato mentre questo
-            #task era in esecuzione, non lo si deve "resuscitare" riportandolo a 'ready'
-            #(la cancellazione via API fa già un revoke best-effort del task, ma non
-            #può fermare un task già in esecuzione — questo guard copre quel caso).
+
             doc_update = session.execute(
                 text("""
                     UPDATE documents

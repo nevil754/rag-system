@@ -143,10 +143,7 @@ async def delete_document(
         raise HTTPException(status_code=404, detail="Documento non trovato")
 
     if doc.status in ("pending", "processing"):
-        #best-effort: se l'ingestion non è ancora partita, questo evita che il worker
-        #Celery riscriva i vettori appena cancellati sotto e rimetta status='ready'
-        #(il guard in ingestion_tasks.py copre comunque il caso in cui il task sia
-        #già in esecuzione e il revoke arrivi troppo tardi per fermarlo).
+
         job_row = await db.execute(
             text("""
                 SELECT TOP 1 celery_task_id FROM ingestion_jobs

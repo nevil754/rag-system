@@ -43,9 +43,7 @@ _known_collections: set[str] = set()
 
 
 def _validate_collection_dimension(collection_name: str, existing: Any) -> None:
-    #se in futuro si cambia embeddings_model con una dimensione diversa senza un
-    #force_recreate esplicito, meglio fallire qui con un messaggio chiaro che
-    #scoprirlo dentro un errore Qdrant poco leggibile al primo upsert.
+
     from app.core.embeddings import get_embedding_dimension
     from app.core.settings import get_settings
     try:

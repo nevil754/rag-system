@@ -43,10 +43,7 @@ class ChatService:
 
 
     async def _check_conversation_ownership(self, conv_id: str) -> None:
-        #il conversation_id è fornito dal client: se punta a una conversazione
-        #già esistente, deve appartenere all'utente corrente, altrimenti si
-        #potrebbe scrivere messaggi nella conversazione di un altro utente dello
-        #stesso tenant (get_history è già protetto in lettura, qui mancava in scrittura).
+
         async with tenant_db.aget_session(self.tenant_slug) as session:
             row = (await session.execute(
                 text("SELECT user_id FROM conversations WHERE id = :id"),
