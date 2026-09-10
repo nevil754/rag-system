@@ -20,9 +20,7 @@ from app.rag.memory.context_builder import format_sources_for_response
 
 settings = get_settings()
 
-#riferimenti ai controlli anti-allucinazione lanciati in background (vedi
-#_schedule_hallucination_check), per evitare che vengano garbage-collected
-#prima di completare.
+
 _background_tasks: set[asyncio.Task] = set()
 
 
@@ -100,9 +98,7 @@ class ChatService:
             result["answer"] = validation.answer
             logger.debug("Risposta corretta dal validator", issues=validation.issues)
 
-        #il controllo anti-allucinazione è un secondo giro LLM completo: la risposta
-        #all'utente è già pronta e non deve aspettarlo. Gira in background e aggiorna
-        #hallucination_score sul messaggio già salvato non appena è pronto.
+
         message_id = await self._save_messages(
             conv_id=conv_id,
             question=question,

@@ -48,8 +48,7 @@ def run_ingestion_pipeline(
     if settings.qdrant_use_sparse:
         from app.core.embeddings import embed_sparse_texts
         from concurrent.futures import ThreadPoolExecutor
-        #denso (GPU) e sparso (CPU/BM25) non dipendono l'uno dall'altro: li lancio
-        #in parallelo invece che in sequenza, cosi il tempo pipeline non è la somma dei due.
+        #denso (GPU) e sparso (CPU/BM25) non dipendono l'uno dall'altro, lanciati in parallelo
         with ThreadPoolExecutor(max_workers=2) as pool:
             dense_future = pool.submit(embed_texts, texts)
             sparse_future = pool.submit(embed_sparse_texts, texts)

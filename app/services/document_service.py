@@ -85,9 +85,7 @@ class DocumentService:
                 """),
                 {"id": job_id, "doc_id": document_id}
             )
-            #commit PRIMA di accodare il task Celery: il worker gira su un altro
-            #processo/server e deve trovare queste righe già visibili quando parte.
-            #evita la race condition che prima veniva tamponata con un countdown fisso di 3s.
+
             await self.db.commit()
         except Exception:
             file_path.unlink(missing_ok=True)
@@ -112,9 +110,7 @@ class DocumentService:
             )
             await self.db.commit()
         except Exception as job_exc:
-            #non fatale: il worker stesso scrive celery_task_id in ingestion_jobs
-            #non appena il task parte (vedi ingest_document), quindi l'ingestion
-            #procede comunque; qui si perde solo la possibilità di 'cancel' immediato.
+
             logger.warning(
                 "Impossibile salvare celery_task_id sul job appena creato",
                 document_id=document_id,

@@ -38,9 +38,7 @@ def get_memory_collection_name(tenant_slug: str) -> str:
     return f"tenant_{safe_slug}_memory"
 
 
-#collection già verificate/creata in questo processo: evita una round-trip di rete
-#verso Qdrant (client.get_collection) ad ogni singolo documento ingerito, dato che
-#dopo la prima verifica la collection di un tenant non cambia più.
+
 _known_collections: set[str] = set()
 
 
