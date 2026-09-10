@@ -29,7 +29,7 @@ embeddings:
 llm:
   provider: "ollama"
   model: "llama3.2:latest"
-  num_ctx: 2048
+  num_ctx: 8192   #alzato da 2048: il contesto RAG (fino a 12000 char, vedi context_builder.max_context_chars) + storico conversazione + prompt di sistema non ci stava, veniva troncato silenziosamente da Ollama. GPU potente, nessun problema di risorse.
   api_key: "${OLLAMA_API_KEY}"
   base_url: "http://srvai2k22:11434/"
   temperature: 0.0

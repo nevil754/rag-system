@@ -38,6 +38,12 @@ def get_memory_collection_name(tenant_slug: str) -> str:
     return f"tenant_{safe_slug}_memory"
 
 
+#collection già verificate/creata in questo processo: evita una round-trip di rete
+#verso Qdrant (client.get_collection) ad ogni singolo documento ingerito, dato che
+#dopo la prima verifica la collection di un tenant non cambia più.
+_known_collections: set[str] = set()
+
+
 def ensure_collection(
     tenant_slug: str,
     force_recreate: bool = False,
@@ -45,15 +51,19 @@ def ensure_collection(
     from app.core.settings import get_settings
     from app.core.embeddings import get_embedding_dimension
     settings = get_settings()
-    client = get_qdrant_client()
     collection_name = get_collection_name(tenant_slug)
+    if not force_recreate and collection_name in _known_collections:
+        return collection_name
+    client = get_qdrant_client()
     try:
         existing = client.get_collection(collection_name)
         if not force_recreate:   #quindi se True allora runna this
             logger.debug(f"Collection già esistente: {collection_name}")
+            _known_collections.add(collection_name)
             return collection_name
         logger.warning(f"force_recreate=True — cancello collection {collection_name}")
         client.delete_collection(collection_name)
+        _known_collections.discard(collection_name)
     except UnexpectedResponse:
         pass
     dimension = get_embedding_dimension()  
@@ -104,6 +114,7 @@ def ensure_collection(
         dimension=dimension,
         sparse=settings.qdrant_use_sparse,
     )
+    _known_collections.add(collection_name)
     return collection_name
 
 
@@ -119,6 +130,7 @@ async def adelete_tenant_collections(tenant_slug: str) -> None:
         name = get_name(tenant_slug)
         try:
             await client.delete_collection(name)
+            _known_collections.discard(name)
             logger.info(f"Collection cancellata: {name}")
         except Exception as e:
             logger.warning(f"Impossibile cancellare collection {name}: {e}")

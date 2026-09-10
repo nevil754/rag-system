@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import hashlib
 import json
 import time
@@ -18,6 +19,11 @@ from app.rag.memory.context_builder import format_sources_for_response
 
 
 settings = get_settings()
+
+#riferimenti ai controlli anti-allucinazione lanciati in background (vedi
+#_schedule_hallucination_check), per evitare che vengano garbage-collected
+#prima di completare.
+_background_tasks: set[asyncio.Task] = set()
 
 
 class ChatService:
@@ -94,13 +100,9 @@ class ChatService:
             result["answer"] = validation.answer
             logger.debug("Risposta corretta dal validator", issues=validation.issues)
 
-        hall_score = await check_faithfulness(question, result["answer"], result.get("context", ""))
-        if is_hallucination(hall_score):
-            logger.warning(
-                "Potenziale allucinazione rilevata",
-                score=hall_score,
-                question=question[:80],
-            )
+        #il controllo anti-allucinazione è un secondo giro LLM completo: la risposta
+        #all'utente è già pronta e non deve aspettarlo. Gira in background e aggiorna
+        #hallucination_score sul messaggio già salvato non appena è pronto.
         message_id = await self._save_messages(
             conv_id=conv_id,
             question=question,
@@ -109,7 +111,7 @@ class ChatService:
             tokens_in=result.get("tokens_in", 0),
             tokens_out=result.get("tokens_out", 0),
             latency_ms=result.get("latency_ms", 0),
-            hallucination_score=hall_score,
+            hallucination_score=None,
         )
         await self.redis.append_message( conv_id, {
             "role": "user", "content": question
@@ -127,12 +129,19 @@ class ChatService:
             "tokens_in": result.get("tokens_in"),
             "tokens_out": result.get("tokens_out"),
             "latency_ms": result.get("latency_ms"),
-            "hallucination_score": round(hall_score, 3),
+            "hallucination_score": None,
         }
         await self.redis.set_query_cache( query_hash, json.dumps(response) )
         await self._increment_usage_stats(
             tokens_in=result.get("tokens_in", 0),
             tokens_out=result.get("tokens_out", 0),
+        )
+        _schedule_hallucination_check(
+            tenant_slug=self.tenant_slug,
+            question=question,
+            answer=result["answer"],
+            context=result.get("context", ""),
+            message_id=message_id,
         )
         return response
 
@@ -377,4 +386,42 @@ class ChatService:
 def _hash_query(question: str, conv_id: str, collection_id: str | None = None) -> str:
     normalized = question.strip().lower()
     return hashlib.md5(f"{conv_id}:{collection_id or ''}:{normalized}".encode()).hexdigest()  #hasha usando MD5 per ottenere un hash unico della query e della conversazione
+
+
+def _schedule_hallucination_check(
+    tenant_slug: str,
+    question: str,
+    answer: str,
+    context: str,
+    message_id: int,
+) -> None:
+    task = asyncio.create_task(
+        _run_hallucination_check(tenant_slug, question, answer, context, message_id)
+    )
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
+
+async def _run_hallucination_check(
+    tenant_slug: str,
+    question: str,
+    answer: str,
+    context: str,
+    message_id: int,
+) -> None:
+    try:
+        score = await check_faithfulness(question, answer, context)
+        if is_hallucination(score):
+            logger.warning(
+                "Potenziale allucinazione rilevata (background)",
+                score=score,
+                question=question[:80],
+            )
+        async with tenant_db.aget_session(tenant_slug) as session:
+            await session.execute(
+                text("UPDATE messages SET hallucination_score = :score WHERE id = :id"),
+                {"score": score, "id": message_id}
+            )
+    except Exception as e:
+        logger.warning(f"Controllo allucinazioni in background fallito: {e}")
 

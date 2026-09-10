@@ -45,14 +45,21 @@ def run_ingestion_pipeline(
     if not chunks:
         raise ValueError(f"Nessun chunk estratto dal documento {filename}")
     texts = [ c.text for c in chunks ]
-    vectors = embed_texts(texts)
-    logger.debug( f"Embedding: {len(vectors)} vettori generati" )
     if settings.qdrant_use_sparse:
         from app.core.embeddings import embed_sparse_texts
-        sparse_vectors: list[dict | None] = embed_sparse_texts(texts)
-        logger.debug( f"Sparse embedding: {len(sparse_vectors)} vettori generati" )
+        from concurrent.futures import ThreadPoolExecutor
+        #denso (GPU) e sparso (CPU/BM25) non dipendono l'uno dall'altro: li lancio
+        #in parallelo invece che in sequenza, cosi il tempo pipeline non è la somma dei due.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            dense_future = pool.submit(embed_texts, texts)
+            sparse_future = pool.submit(embed_sparse_texts, texts)
+            vectors = dense_future.result()
+            sparse_vectors: list[dict | None] = sparse_future.result()
+        logger.debug( f"Embedding: {len(vectors)} vettori densi + {len(sparse_vectors)} vettori sparsi generati in parallelo" )
     else:
+        vectors = embed_texts(texts)
         sparse_vectors = [None] * len(vectors)
+        logger.debug( f"Embedding: {len(vectors)} vettori generati" )
 
     collection_name = ensure_collection( tenant_slug )
     client = get_qdrant_client()

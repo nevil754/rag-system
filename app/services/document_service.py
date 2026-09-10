@@ -52,6 +52,7 @@ class DocumentService:
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
+        job_id = str(uuid4())
         try:
             import mimetypes   #guess the file type watching the extension
             mime_type = mimetypes.guess_type(original_filename)[0] or "application/octet-stream"  #e.g. mimetypes.guess_type("document.pdf")  return tupla (mime_type, encoding) quindi ("application/pdf", None), con [0] prendi solo il primo elemento. application/octet-stream è il MIME type generico per file binari sconosciuti
@@ -71,49 +72,55 @@ class DocumentService:
                     "filename": saved_filename,
                     "orig_name": original_filename,
                     "hash": file_hash,
-                    "size": len(file_bytes),    
+                    "size": len(file_bytes),
                     "mime": mime_type,
                     "path": str(file_path),
                     "user_id": self.user_id,
                 }
             )
-            from app.workers.ingestion_tasks import ingest_document
-            task = ingest_document.apply_async(
-                args=[
-                    self.tenant_id,
-                    self.tenant_slug,
-                    document_id,
-                    str(file_path),
-                    collection_id,
-                ],
-                queue="high",   #sets x this celery task -- va sul worker GPU (celery-worker-high, server2), non su celery-worker-default (CPU only)!
-                countdown=3,       #sets x this celery task
-                headers={"tenant_id": self.tenant_id},    #sets x this celery task
+            await self.db.execute(
+                text("""
+                    INSERT INTO ingestion_jobs (id, document_id, status)
+                    VALUES (:id, :doc_id, 'queued')
+                """),
+                {"id": job_id, "doc_id": document_id}
             )
-            job_id = str(uuid4())
-            try:
-                await self.db.execute(
-                    text("""
-                        INSERT INTO ingestion_jobs (id, document_id, status, celery_task_id)
-                        VALUES (:id, :doc_id, 'queued', :task_id)
-                    """),
-                    {"id": job_id, "doc_id": document_id, "task_id": task.id}
-                )
-
-                await self.db.commit()
-            except Exception as job_exc:
-                from app.workers.celery_app import celery_app
-                celery_app.control.revoke(task.id, terminate=False)
-                logger.error(
-                    "Insert ingestion_jobs fallita, task Celery revocato",
-                    document_id=document_id,
-                    task_id=task.id,
-                    error=str(job_exc),
-                )
-                raise
+            #commit PRIMA di accodare il task Celery: il worker gira su un altro
+            #processo/server e deve trovare queste righe già visibili quando parte.
+            #evita la race condition che prima veniva tamponata con un countdown fisso di 3s.
+            await self.db.commit()
         except Exception:
             file_path.unlink(missing_ok=True)
             raise
+
+        from app.workers.ingestion_tasks import ingest_document
+        task = ingest_document.apply_async(
+            args=[
+                self.tenant_id,
+                self.tenant_slug,
+                document_id,
+                str(file_path),
+                collection_id,
+            ],
+            queue="high",   #va sul worker GPU (celery-worker-high, server2), non su celery-worker-default (CPU only)!
+            headers={"tenant_id": self.tenant_id},
+        )
+        try:
+            await self.db.execute(
+                text("UPDATE ingestion_jobs SET celery_task_id = :task_id WHERE id = :id"),
+                {"task_id": task.id, "id": job_id}
+            )
+            await self.db.commit()
+        except Exception as job_exc:
+            #non fatale: il worker stesso scrive celery_task_id in ingestion_jobs
+            #non appena il task parte (vedi ingest_document), quindi l'ingestion
+            #procede comunque; qui si perde solo la possibilità di 'cancel' immediato.
+            logger.warning(
+                "Impossibile salvare celery_task_id sul job appena creato",
+                document_id=document_id,
+                task_id=task.id,
+                error=str(job_exc),
+            )
         logger.info(
             "Documento in coda",
             document_id = document_id,
