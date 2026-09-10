@@ -42,6 +42,19 @@ class ChatService:
 
 
 
+    async def _check_conversation_ownership(self, conv_id: str) -> None:
+        #il conversation_id è fornito dal client: se punta a una conversazione
+        #già esistente, deve appartenere all'utente corrente, altrimenti si
+        #potrebbe scrivere messaggi nella conversazione di un altro utente dello
+        #stesso tenant (get_history è già protetto in lettura, qui mancava in scrittura).
+        async with tenant_db.aget_session(self.tenant_slug) as session:
+            row = (await session.execute(
+                text("SELECT user_id FROM conversations WHERE id = :id"),
+                {"id": conv_id}
+            )).fetchone()
+        if row is not None and str(row.user_id) != str(self.user_id):
+            raise PermissionError("Conversazione non trovata o non autorizzata")
+
     async def query(
         self,
         question: str,
@@ -50,6 +63,8 @@ class ChatService:
         stream: bool = False,
     ) -> dict[str, Any]:
         conv_id = conversation_id or str(uuid4())
+        if conversation_id:
+            await self._check_conversation_ownership(conv_id)
         query_hash = _hash_query( question, conv_id, collection_id )
         cached = await self.redis.get_query_cache(query_hash)
         if cached:
@@ -150,6 +165,8 @@ class ChatService:
     ) -> AsyncGenerator[tuple[str, Any], None]:
 
         conv_id = conversation_id or str(uuid4())
+        if conversation_id:
+            await self._check_conversation_ownership(conv_id)
         query_hash = _hash_query(question, conv_id, collection_id)
         cached = await self.redis.get_query_cache(query_hash)
         if cached:

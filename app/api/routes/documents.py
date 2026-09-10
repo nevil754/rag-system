@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from loguru import logger
 from sqlalchemy import text
@@ -134,12 +135,35 @@ async def delete_document(
     db: CurrentDB,
 ) -> None:
     row = await db.execute(
-        text("SELECT id, status FROM documents WHERE id = :id"),
+        text("SELECT id, status, storage_path FROM documents WHERE id = :id"),
         {"id": document_id}
     )
     doc = row.fetchone()
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
+
+    if doc.status in ("pending", "processing"):
+        #best-effort: se l'ingestion non è ancora partita, questo evita che il worker
+        #Celery riscriva i vettori appena cancellati sotto e rimetta status='ready'
+        #(il guard in ingestion_tasks.py copre comunque il caso in cui il task sia
+        #già in esecuzione e il revoke arrivi troppo tardi per fermarlo).
+        job_row = await db.execute(
+            text("""
+                SELECT TOP 1 celery_task_id FROM ingestion_jobs
+                WHERE document_id = :doc_id AND status IN ('queued', 'running')
+                ORDER BY created_at DESC
+            """),
+            {"doc_id": document_id}
+        )
+        job = job_row.fetchone()
+        if job and job.celery_task_id:
+            from app.workers.celery_app import celery_app
+            celery_app.control.revoke(job.celery_task_id, terminate=False)
+            logger.info(
+                f"Task Celery revocato per cancellazione documento in corso: {document_id}",
+                task_id=job.celery_task_id, tenant=tenant.tenant_slug,
+            )
+
     from app.core.vectorstore import get_async_qdrant_client, get_collection_name
     from qdrant_client.http import models as qmodels
     client = get_async_qdrant_client()
@@ -167,6 +191,11 @@ async def delete_document(
         text("UPDATE documents SET status = 'deleted', updated_at = SYSUTCDATETIME() WHERE id = :id"),
         {"id": document_id}
     )
+    if doc.storage_path:
+        try:
+            Path(doc.storage_path).unlink(missing_ok=True)
+        except OSError as e:
+            logger.warning(f"Impossibile cancellare il file fisico del documento {document_id}: {e}")
     logger.info(f"Documento cancellato: {document_id}", tenant=tenant.tenant_slug)
 
 

@@ -42,6 +42,26 @@ def get_memory_collection_name(tenant_slug: str) -> str:
 _known_collections: set[str] = set()
 
 
+def _validate_collection_dimension(collection_name: str, existing: Any) -> None:
+    #se in futuro si cambia embeddings_model con una dimensione diversa senza un
+    #force_recreate esplicito, meglio fallire qui con un messaggio chiaro che
+    #scoprirlo dentro un errore Qdrant poco leggibile al primo upsert.
+    from app.core.embeddings import get_embedding_dimension
+    from app.core.settings import get_settings
+    try:
+        actual = existing.config.params.vectors["dense"].size
+    except (AttributeError, KeyError, TypeError):
+        return
+    expected = get_embedding_dimension()
+    if actual != expected:
+        raise ValueError(
+            f"Collection Qdrant '{collection_name}' ha vettori 'dense' a {actual} dimensioni, "
+            f"ma il modello di embedding configurato ('{get_settings().embeddings_model}') "
+            f"ne produce {expected}. Serve un force_recreate (o una migrazione dei vettori) "
+            f"prima di poter ingerire nuovi documenti per questo tenant."
+        )
+
+
 def ensure_collection(
     tenant_slug: str,
     force_recreate: bool = False,
@@ -56,6 +76,7 @@ def ensure_collection(
     try:
         existing = client.get_collection(collection_name)
         if not force_recreate:   #quindi se True allora runna this
+            _validate_collection_dimension(collection_name, existing)
             logger.debug(f"Collection già esistente: {collection_name}")
             _known_collections.add(collection_name)
             return collection_name

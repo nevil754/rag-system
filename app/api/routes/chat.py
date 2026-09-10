@@ -41,6 +41,13 @@ async def chat_query(
             conversation_id=request.conversation_id,
             collection_id=request.collection_id,
         )
+    except PermissionError as e:
+        logger.warning(
+            "Chat query rifiutata: conversation_id non autorizzato",
+            tenant_id=tenant.tenant_id, user_id=tenant.user_id,
+            conversation_id=request.conversation_id,
+        )
+        raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         logger.error(
             "Chat query fallita",

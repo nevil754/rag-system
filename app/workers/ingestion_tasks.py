@@ -63,6 +63,7 @@ def ingest_document(
             chunks=result["chunk_count"],
             elapsed_ms=elapsed_ms,
         )
+        document_was_deleted_meanwhile = False
         with tenant_db.get_session(tenant_slug) as session:
             session.execute(
                 text("""
@@ -74,20 +75,46 @@ def ingest_document(
                 """),
                 {"doc_id": document_id}
             )
-            session.execute(
+            #AND status != 'deleted': se il documento è stato cancellato mentre questo
+            #task era in esecuzione, non lo si deve "resuscitare" riportandolo a 'ready'
+            #(la cancellazione via API fa già un revoke best-effort del task, ma non
+            #può fermare un task già in esecuzione — questo guard copre quel caso).
+            doc_update = session.execute(
                 text("""
                     UPDATE documents
                     SET status = 'ready',
                         chunk_count = :chunks,
                         page_count = :pages,
                         updated_at = SYSUTCDATETIME()
-                    WHERE id = :id
+                    WHERE id = :id AND status != 'deleted'
                 """),
                 {
                     "chunks": result["chunk_count"],
                     "pages": result.get("page_count"),
                     "id": document_id,
                 }
+            )
+            document_was_deleted_meanwhile = doc_update.rowcount == 0
+
+        if document_was_deleted_meanwhile:
+            log.warning(
+                "Documento cancellato durante l'ingestion: rimuovo i vettori appena inseriti",
+                document_id=document_id,
+            )
+            from app.core.vectorstore import get_qdrant_client, get_collection_name
+            from qdrant_client.http import models as qmodels
+            client = get_qdrant_client()
+            collection = get_collection_name(tenant_slug)
+            client.delete(
+                collection_name=collection,
+                points_selector=qmodels.FilterSelector(
+                    filter=qmodels.Filter(
+                        must=[qmodels.FieldCondition(
+                            key="document_id",
+                            match=qmodels.MatchValue(value=document_id)
+                        )]
+                    )
+                )
             )
 
         invalidated = invalidate_tenant_query_cache_sync(tenant_id)
