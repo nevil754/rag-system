@@ -64,7 +64,7 @@ https://eu.smith.langchain.com/  //european langsmith for tracing answers & resp
 
 ### connection container sqlserver to SQL Server Management Studio (SSMS):
 open ssh -L 14330:127.0.0.1:1433 deploy@192.168.113.52 (password 12345678)
-open SSMS con credentials
+open SSMS with credentials
 127.0.0.1,14330 
 Authenticazione di SQL Server
 SA
