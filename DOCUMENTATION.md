@@ -40,4 +40,23 @@ print('ok')
 This platform has also an AI Agentic Architecture in evolution phase, unlinked, not tested so much.
 This AI Agentic Architecture enables web scraping across internet, extending the Chat AI's knowledge beyond the isolated tenant environment.
 
+## Debug Tools
+
+initial superadmin credentials:
+admin@platform.competesrl.it
+Admin123456!
+
+docker logs --tail 200 rag-system-dev-fastapi-1
+docker logs --tail 200 rag-system-dev-celery-worker-default-1
+
+http://192.168.113.52:8090   //my frontend dev, http://192.168.113.52:8091/ x staging, http://192.168.113.52:8092/  x production
+192.168.113.52
+http://192.168.113.52:8000/docs   //swagger UI endpoints
+http://192.168.113.52:8000   //fastapi
+http://192.168.113.52:5555   //flower (admin, beaflwer93!, )
+http://192.168.113.52:8080   //chainlit (admin, admin) ma intanto non lo uso piu
+http://192.168.113.52:6333   //qdrant (http://192.168.113.52:6333/dashboard to check the status of your vector points)
+http://192.168.113.52:6379   //redis
+http://192.168.113.52:1433   //sqlserver
+https://eu.smith.langchain.com/  //european langsmith for tracing answers & responses of the Chat AI, insert ur key in the .env file
 
