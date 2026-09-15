@@ -78,7 +78,7 @@ async def retrieve(
             query_filter=qdrant_filter,
             limit=k,
             with_payload=True,
-            score_threshold=0.3,
+            score_threshold=settings.retriever_dense_score_threshold,
         )
 
     sparse_results = []
@@ -102,9 +102,7 @@ async def retrieve(
     )
     fused = _rrf_fusion(dense_results, sparse_results, k=k)
 
-    if settings.retriever_strategy == "mmr" and len(fused) > 1:
-        fused = _mmr_rerank(query_vector, fused, lambda_param=settings.retriever_mmr_lambda)
-        logger.debug("Retrieval: MMR applicata", risultati=len(fused))
+
     if settings.reranker_enabled and len(fused) > 1:
         fused = await _async_cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
 
@@ -115,6 +113,9 @@ async def retrieve(
                 "Retrieval: chunk scartati per score reranker sotto soglia",
                 scartati=before - len(fused), soglia=settings.reranker_min_score,
             )
+    if settings.retriever_strategy == "mmr" and len(fused) > 1:
+        fused = _mmr_rerank(query_vector, fused, lambda_param=settings.retriever_mmr_lambda)
+        logger.debug("Retrieval: MMR applicata", risultati=len(fused))
 
     chunks = []
     for item in fused:

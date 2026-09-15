@@ -46,13 +46,16 @@ def parse_document(file_path: str) -> ParsedDocument:
 
 
 def _parse_with_docling(file_path: str) -> ParsedDocument:
-    from docling.document_converter import DocumentConverter
+    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_table_structure = settings.ingestion_extract_tables
     pipeline_options.do_ocr = False
-    converter = DocumentConverter()
+
+    converter = DocumentConverter(
+        format_options={ InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options) }
+    )
     result = converter.convert(file_path)
     doc = result.document
 

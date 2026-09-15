@@ -89,6 +89,7 @@ class AppSettings(BaseSettings):
     retriever_top_k: int = 20
     retriever_mmr_lambda: float = 0.5
     retriever_auto_filter: bool = False
+    retriever_dense_score_threshold: float = 0.3   #la scala BM25 (sparso) non è comparabile 1:1 con la cosine similarity, nessuna soglia analoga qui
 
     reranker_enabled: bool = True
     reranker_model: str = "BAAI/bge-reranker-v2-m3"

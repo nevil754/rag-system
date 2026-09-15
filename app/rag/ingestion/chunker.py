@@ -42,9 +42,11 @@ def chunk_document(
     filtered_chunks = [ c for c in raw_chunks if len(c.strip()) >= min_size ]
     discarded = len(raw_chunks) - len(filtered_chunks)
     raw_chunks = filtered_chunks
+
+    normalized_pages = [ _normalize_for_page_match(p) for p in pages ] if pages else None
     chunks: list[Chunk] = []
     for i, chunk_text in enumerate(raw_chunks):
-        page_num = _find_page_number(chunk_text, pages) if pages else None
+        page_num = _find_page_number(chunk_text, normalized_pages) if normalized_pages else None
         chunks.append( Chunk(
             text=chunk_text.strip(),
             chunk_index=i,
@@ -71,12 +73,12 @@ def _normalize_for_page_match(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
-def _find_page_number( chunk_text: str, pages: list[str] ) -> int | None:
+def _find_page_number( chunk_text: str, normalized_pages: list[str] ) -> int | None:
     probe = _normalize_for_page_match(chunk_text)[:80]
     if not probe:
         return None
-    for i, page_text in enumerate(pages, 1):
-        if probe in _normalize_for_page_match(page_text):
+    for i, normalized_page in enumerate(normalized_pages, 1):
+        if probe in normalized_page:
             return i
     return None
 

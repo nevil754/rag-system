@@ -150,6 +150,8 @@ class ChatService:
             answer=result["answer"],
             context=result.get("context", ""),
             message_id=message_id,
+            redis=self.redis,
+            query_hash=query_hash,
         )
         return response
 
@@ -404,9 +406,11 @@ def _schedule_hallucination_check(
     answer: str,
     context: str,
     message_id: int,
+    redis: TenantRedis | None = None,
+    query_hash: str | None = None,
 ) -> None:
     task = asyncio.create_task(
-        _run_hallucination_check(tenant_slug, question, answer, context, message_id)
+        _run_hallucination_check(tenant_slug, question, answer, context, message_id, redis, query_hash)
     )
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
@@ -418,6 +422,8 @@ async def _run_hallucination_check(
     answer: str,
     context: str,
     message_id: int,
+    redis: TenantRedis | None = None,
+    query_hash: str | None = None,
 ) -> None:
     try:
         score = await check_faithfulness(question, answer, context)
@@ -432,6 +438,13 @@ async def _run_hallucination_check(
                 text("UPDATE messages SET hallucination_score = :score WHERE id = :id"),
                 {"score": score, "id": message_id}
             )
+        if redis is not None and query_hash is not None:
+
+            cached = await redis.get_query_cache(query_hash)
+            if cached:
+                cached_data = json.loads(cached)
+                cached_data["hallucination_score"] = round(score, 3)
+                await redis.set_query_cache(query_hash, json.dumps(cached_data))
     except Exception as e:
         logger.warning(f"Controllo allucinazioni in background fallito: {e}")
 
