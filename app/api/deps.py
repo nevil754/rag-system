@@ -188,8 +188,22 @@ async def get_current_platform_user(
     if credentials:
         payload = decode_access_token(credentials.credentials)
         if payload and payload.get("is_platform"):
+            platform_user_id = payload.get("sub", "")
+            from sqlalchemy import text
+            async with tenant_db.async_factory() as session:
+                row = await session.execute(
+                    text("SELECT is_active FROM shared.platform_users WHERE id = :id"),
+                    {"id": platform_user_id},
+                )
+                result = row.fetchone()
+            if not result or not result.is_active:
+ 
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Utente platform disabilitato",
+                )
             return PlatformContext(
-                platform_user_id=payload.get("sub", ""),
+                platform_user_id=platform_user_id,
                 email=payload.get("email", ""),
             )
     raise HTTPException(

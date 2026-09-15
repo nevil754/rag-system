@@ -18,6 +18,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         request.state.user_id = None
         request.state.user_role = None
         request.state.user_email = None
+        request.state.platform_user_id = None   #separato da user_id: NON deve mai far scattare il fast-path "tenant valido" in get_current_tenant (deps.py)
 
         if request.url.path in self.PUBLIC_PATHS:
             return await call_next(request)
@@ -32,6 +33,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 request.state.tenant_slug = payload.get("tenant_slug")
                 request.state.user_id = payload.get("sub")
                 request.state.user_role = payload.get("role")
+                request.state.user_email = payload.get("email")
+            elif payload and payload.get("is_platform"):
+
+                request.state.platform_user_id = payload.get("sub")
                 request.state.user_email = payload.get("email")
         elif request.headers.get("X-API-Key"):
 

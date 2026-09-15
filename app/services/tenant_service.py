@@ -37,6 +37,11 @@ async def provision_tenant(
 ) -> dict:
     
     start = time.perf_counter()
+
+    normalized_slug = slugify(slug)
+    if not normalized_slug:
+        raise ValueError(f"Slug non valido: '{slug}'")
+    slug = normalized_slug
     log = logger.bind(tenant_slug=slug, plan=plan)   #crea new logger che contiene gia questi campi
     log.info("Provisioning tenant: avvio", display_name=display_name, self_service=bool(owner_user_id))
 

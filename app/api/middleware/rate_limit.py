@@ -9,6 +9,9 @@ settings = get_settings()
 
 EXCLUDED_PATHS = { "/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json" }
 
+
+PLATFORM_RATE_LIMIT_NAMESPACE = "__platform__"
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         if request.url.path in EXCLUDED_PATHS:
@@ -16,7 +19,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         tenant_id = getattr(request.state, "tenant_id", None)
         user_id = getattr(request.state, "user_id", None)
         if not tenant_id or not user_id:
-            return await call_next(request)
+            platform_user_id = getattr(request.state, "platform_user_id", None)
+            if not platform_user_id:
+                return await call_next(request)
+            tenant_id = PLATFORM_RATE_LIMIT_NAMESPACE
+            user_id = platform_user_id
         try:
             from app.core.redis_client import TenantRedis
             redis = TenantRedis(tenant_id=tenant_id)
