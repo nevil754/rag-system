@@ -93,9 +93,9 @@ class AppSettings(BaseSettings):
 
     reranker_enabled: bool = True
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
-    reranker_top_k: int = 8
+    reranker_top_k: int = 8  #5
     reranker_initial_k: int = 20
-    reranker_min_score: float = 0.1
+    reranker_min_score: float = 0.0
 
     ingestion_prefer_docling: bool = True
     ingestion_extract_tables: bool = True
