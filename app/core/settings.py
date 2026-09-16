@@ -34,7 +34,7 @@ class AppSettings(BaseSettings):
     app_environment: Literal["development", "staging", "production"] = "staging"
 
     llm_provider: str = "ollama"
-    llm_model: str = "gemma4:31b" #"llama3.2:latest"
+    llm_model: str = "gemma4:26b" #"llama3.2:latest"
     llm_num_ctx: int = 8192
     llm_api_key: str = ""
     llm_base_url: str = "http://ollama:11434"
