@@ -52,6 +52,24 @@ class ChatService:
         if row is not None and str(row.user_id) != str(self.user_id):
             raise PermissionError("Conversazione non trovata o non autorizzata")
 
+    async def _resolve_original_filenames(self, chunks: list) -> None:
+        # il payload Qdrant salva il filename di storage (UUID), non quello originale
+        # caricato dall'utente: qui lo si risolve dal DB per ogni chunk restituito,
+        # cosi' funziona anche per i documenti gia' ingeriti (nessuna re-ingestion necessaria)
+        doc_ids = list({ c.document_id for c in chunks if c.document_id })
+        if not doc_ids:
+            return
+        placeholders = ", ".join( f":id{i}" for i in range(len(doc_ids)) )
+        params = { f"id{i}": doc_id for i, doc_id in enumerate(doc_ids) }
+        async with tenant_db.aget_session(self.tenant_slug) as session:
+            rows = (await session.execute(
+                text(f"SELECT id, original_name FROM documents WHERE id IN ({placeholders})"),
+                params
+            )).fetchall()
+        name_by_id = { str(r.id): r.original_name for r in rows }
+        for chunk in chunks:
+            chunk.filename = name_by_id.get(chunk.document_id, chunk.filename)
+
     async def query(
         self,
         question: str,
@@ -98,6 +116,7 @@ class ChatService:
             tenant_id=self.tenant_id,
             collection_id=collection_id,
         )
+        await self._resolve_original_filenames(chunks)
         result = await arun_rag_chain(
             question=question,
             chunks=chunks,
@@ -201,6 +220,7 @@ class ChatService:
             tenant_id=self.tenant_id,
             collection_id=collection_id,
         )
+        await self._resolve_original_filenames(chunks)
         start = time.time()
         full_answer = ""
         context_used = ""
