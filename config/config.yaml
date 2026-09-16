@@ -28,7 +28,7 @@ embeddings:
 
 llm:
   provider: "ollama"
-  model: "llama3.2:latest"
+  model: "gemma4:31b"  #"llama3.2:latest"
   num_ctx: 8192   #2048, ma ora ho GPU quindi alzo
   api_key: "${OLLAMA_API_KEY}"
   base_url: "http://srvai2k22:11434/"
