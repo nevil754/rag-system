@@ -63,7 +63,7 @@ class ChatService:
                 text(f"SELECT id, original_name FROM documents WHERE id IN ({placeholders})"),
                 params
             )).fetchall()
-        debug.logger.warning(f"Resolved original filenames for {len(chunks)} chunks")  #my debug
+        logger.log(f"Resolved original filenames for {len(chunks)} chunks")  #my debug
         name_by_id = { str(r.id): r.original_name for r in rows }
         for chunk in chunks:
             chunk.filename = name_by_id.get(chunk.document_id, chunk.filename)
@@ -114,7 +114,7 @@ class ChatService:
             tenant_id=self.tenant_id,
             collection_id=collection_id,
         )
-        debug.logger.warning(f"Retrieval: {len(chunks)} chunk")  #my debug
+        logger.log(f"Retrieval: {len(chunks)} chunk")  #my debug
         await self._resolve_original_filenames(chunks)
 
         result = await arun_rag_chain(
